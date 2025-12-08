@@ -164,7 +164,7 @@ describe('AUTH', () => {
 
         })
         it('should resend email', async () => {
-
+//жопа бобра
 
             await request(app)
                 .post('/api/auth/registration-email-resending')
