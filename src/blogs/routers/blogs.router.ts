@@ -26,8 +26,8 @@ blogsRouter
         idValidation,
         postInputDtoValidation,
         inputValidationResultMiddleware,
-        createPostByBlogIdHandler)                                                                                         //
-    .get('/:id', idValidation, inputValidationResultMiddleware, getBlogHandler)
+        createPostByBlogIdHandler)                                                                                       //
+    .get('/:id', idValidation, inputValidationResultMiddleware, getBlogHandler)                                     //
     .put(
         '/:id',
         superAdminGuardMiddleware,
@@ -35,13 +35,13 @@ blogsRouter
         blogInputDtoValidation,
         inputValidationResultMiddleware,
         updateBlogHandler,
-    )
+    )                                                                                                                    //
     .delete(
         '/:id',
         superAdminGuardMiddleware,
         idValidation,
         inputValidationResultMiddleware,
         deleteBlogHandler,
-    )
+    )                                                                                                                    //
 
 

@@ -1,16 +1,16 @@
 import {Request, Response} from 'express';
-import {HttpStatus} from '../../../core/types/http-statuses';
-
 import {postQueryRepository} from "../../repositories/post.queryRepository";
+import {ResultStatus} from "../../../common/types/objectResultTypes";
+import {resultCodeToHttpException} from "../../../common/mapper/resultCodeToHttp";
 
 export async function getPostHandler(req: Request, res: Response) {
 
-    const id = req.params.id;
+    const postId = req.params.id;
 
-    const checkingPost = await postQueryRepository.findById(id);
-    if (!checkingPost) {
-        return res.sendStatus(HttpStatus.NotFound);
+    const foundPost = await postQueryRepository.findById(postId);
+    if (foundPost.status !== ResultStatus.Success) {
+        return res.sendStatus(resultCodeToHttpException(foundPost.status));
     }
-    return res.status(HttpStatus.Ok).send(checkingPost);
+    return res.status(resultCodeToHttpException(foundPost.status)).send(foundPost.data);
 
 }

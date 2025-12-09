@@ -1,12 +1,11 @@
 import {Request, Response} from 'express';
-import {HttpStatus} from '../../../core/types/http-statuses';
 import {commentsServices} from "../../../comments/application/comments.service";
 import {WithId} from "mongodb";
-import {postRepository} from "../../repositories/post.repository";
-import {PostInDb} from "../../types/postInDb";
 import {commentsQueryRepository} from "../../../comments/repositories/comments.queryRepository";
 import {CommentInPut} from "../../../comments/types/commentInPut";
 import {UserInDb} from "../../../users/types/userInDb";
+import {ResultStatus} from "../../../common/types/objectResultTypes";
+import {resultCodeToHttpException} from "../../../common/mapper/resultCodeToHttp";
 
 
 export async function createCommentHandler(req: Request, res: Response) {
@@ -15,17 +14,15 @@ export async function createCommentHandler(req: Request, res: Response) {
     const postId = req.params.id;
     const content: CommentInPut = req.body;
 
-    const post: WithId<PostInDb> | null = await postRepository.findById(postId);
-
-    if (!post) {
-        return res.sendStatus(HttpStatus.NotFound);
+    const commentId = await commentsServices.create(user, content, postId);
+    if (commentId.status !== ResultStatus.Created) {
+        return res.sendStatus(resultCodeToHttpException(commentId.status))
+    }
+    const comment = await commentsQueryRepository.findById(commentId.data!);
+    if (comment.status !== ResultStatus.Success) {
+        return res.sendStatus(resultCodeToHttpException(commentId.status))
     }
 
-    const commentId: string = await commentsServices.create(user, content, postId);
-
-    const comment = await commentsQueryRepository.findById(commentId);
-
-
-    res.status(HttpStatus.Created).send(comment);
+    return res.status(resultCodeToHttpException(comment.status)).send(comment.data);
 }
 

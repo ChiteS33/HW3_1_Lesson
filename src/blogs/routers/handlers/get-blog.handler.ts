@@ -1,6 +1,6 @@
 import {Request, Response} from 'express';
-import {HttpStatus} from '../../../core/types/http-statuses';
 import {blogsQueryRepository} from "../../repositories/blogs.queryRepository";
+import {resultCodeToHttpException} from "../../../common/mapper/resultCodeToHttp";
 
 
 
@@ -9,9 +9,9 @@ export async function getBlogHandler(req: Request, res: Response) {
     const blogId = req.params.id;
 
     const blog = await blogsQueryRepository.findById(blogId);
-    if (!blog) {
-        return res.sendStatus(HttpStatus.NotFound)
+    if(blog.status !== "Created") {
+        return res.sendStatus(resultCodeToHttpException(blog.status))
     }
 
-    return res.status(HttpStatus.Ok).send(blog);
+    return res.status(resultCodeToHttpException(blog.status)).send(blog.data);
 }

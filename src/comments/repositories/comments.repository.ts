@@ -12,11 +12,11 @@ export const commentsRepository = {
     },
 
     async findById(id: string): Promise<WithId<CommentInDb> | null> {
+        return  await commentCollection.findOne({_id: new ObjectId(id)});
+        // const foundComment: WithId<CommentInDb> | null = await commentCollection.findOne({_id: new ObjectId(id)});
+        // if (!foundComment) return null
 
-        const foundComment: WithId<CommentInDb> | null = await commentCollection.findOne({_id: new ObjectId(id)});
-        if (!foundComment) return null
-
-        return foundComment
+        // return foundComment
     },
     async update(id: string, body: CommentInPut): Promise<void> {
 

@@ -14,7 +14,7 @@ export const usersRouter = Router({})
 
 
 usersRouter
-    .get('',superAdminGuardMiddleware, paginationValidationWithEmailAndLogin, inputValidationResultMiddleware, getUserListHandler)
+    .get('',superAdminGuardMiddleware, paginationValidationWithEmailAndLogin, inputValidationResultMiddleware, getUserListHandler)  //
     .post('',superAdminGuardMiddleware, userInputDtoValidation, inputValidationResultMiddleware, createUserHandler)
-    .delete('/:id', superAdminGuardMiddleware, idValidation, inputValidationResultMiddleware, deleteUserHandler)
+    .delete('/:id', superAdminGuardMiddleware, idValidation, inputValidationResultMiddleware, deleteUserHandler)     //
 

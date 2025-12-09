@@ -8,23 +8,23 @@ import {WithId} from "mongodb";
 
 export const blogsServices = {
 
-async findById(id: string): Promise<ObjectResult<WithId<BlogInDb> | null>> {
-    const foundBlog = await blogsRepository.findById(id);
-    if(!foundBlog) return {
-        status: ResultStatus.NotFound,
-        errorMessage: " blogId is not founded",
-        extensions: [{
-            field: "blogId",
-            message: " blogId is not founded"
-        }],
-        data: null
-            }
-    return {
-        status: ResultStatus.Success,
-        extensions: [],
-        data: foundBlog
-    }
-},
+    async findById(id: string): Promise<ObjectResult<WithId<BlogInDb> | null>> {
+        const foundBlog = await blogsRepository.findById(id);
+        if (!foundBlog) return {
+            status: ResultStatus.NotFound,
+            errorMessage: " blogId is not founded",
+            extensions: [{
+                field: "blogId",
+                message: " blogId is not founded"
+            }],
+            data: null
+        }
+        return {
+            status: ResultStatus.Success,
+            extensions: [],
+            data: foundBlog
+        }
+    },
 
     async create(inputInfo: BlogInputDto): Promise<ObjectResult<string>> {
 
@@ -39,11 +39,21 @@ async findById(id: string): Promise<ObjectResult<WithId<BlogInDb> | null>> {
 
 
     },
-    async update(id: string, inputInfo: BlogInputDto): Promise<void | null> {
-        return await blogsRepository.update(id, inputInfo);
+    async update(id: string, inputInfo: BlogInputDto): Promise<ObjectResult<void | null>> {
+        await blogsRepository.update(id, inputInfo);
+        return {
+            status: ResultStatus.NoContent,
+            extensions: [],
+            data: null
+        }
     },
-    async delete(id: string): Promise<void | null> {
-        return await blogsRepository.delete(id);
+    async delete(id: string): Promise<ObjectResult<void | null>> {
+        await blogsRepository.delete(id);
+        return {
+            status: ResultStatus.NoContent,
+            extensions: [],
+            data: null
+        }
     }
 }
 

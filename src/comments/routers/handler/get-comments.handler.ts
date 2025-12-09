@@ -1,6 +1,6 @@
 import {Request, Response} from 'express';
-import {HttpStatus} from "../../../core/types/http-statuses";
 import {commentsQueryRepository} from "../../repositories/comments.queryRepository";
+import {resultCodeToHttpException} from "../../../common/mapper/resultCodeToHttp";
 
 
 export async function getCommentById(req: Request, res: Response) {
@@ -8,9 +8,9 @@ export async function getCommentById(req: Request, res: Response) {
     const id = req.params.id;
 
     const comment = await commentsQueryRepository.findById(id);
-    if (!comment) {
-        return res.sendStatus(HttpStatus.NotFound);
+    if (comment.status !== "Success") {
+        return res.sendStatus(resultCodeToHttpException(comment.status));
     }
 
-    return res.status(HttpStatus.Ok).send(comment);
+    return res.status(resultCodeToHttpException(comment.status)).send(comment.data);
 }

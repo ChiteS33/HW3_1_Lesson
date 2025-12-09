@@ -9,20 +9,49 @@ import {OutPutPagination} from "../../common/types/outputPagination";
 import {finalCommentsMapperWithPago} from "../routers/mappers/commentsFinalMapperWithPago";
 import {FinalWithPagination} from "../../common/types/finalWithPagination";
 import {InPutPagination} from "../../common/types/inPutPagination";
+import {ObjectResult, ResultStatus} from "../../common/types/objectResultTypes";
+import {postsServices} from "../../posts/application/posts.service";
 
 
 export const commentsQueryRepository = {
 
-    async findById(id: string): Promise<CommentOutPut | null> {
+    async findById(id: string): Promise<ObjectResult<CommentOutPut | null>> {
 
         const foundComment: WithId<CommentInDb> | null = await commentCollection.findOne({_id: new ObjectId(id)})
-        if (!foundComment) return null;
+        if (!foundComment) return {
+            status: ResultStatus.NotFound,
+            errorMessage: "Could not find comment",
+            extensions: [{
+                field: "commentId",
+                message: "Could not find comment",
+            }],
+            data: null
+        };
 
-        return commentMapp(foundComment)
+        return {
+            status: ResultStatus.Success,
+            extensions: [],
+            data: commentMapp(foundComment)
+        }
+
 
     },
 
-    async findByPostId(postId: string, query: InPutPagination): Promise<FinalWithPagination<CommentOutPut>> {
+    async findByPostId(postId: string, query: InPutPagination): Promise<ObjectResult<FinalWithPagination<CommentOutPut> | null>> {
+
+        const result = await postsServices.findById(postId);
+        if (!result) {
+            return {
+                status: ResultStatus.NotFound,
+                errorMessage: "Post not found",
+                extensions: [{
+                    field: "Post",
+                    message: "Post not found"
+                }],
+                data: null
+            }
+
+        }
 
         const pagination: PaginationForRepo = valuesPaginationMaker(query)
         const skip = (pagination.pageSize * pagination.pageNumber) - pagination.pageSize
@@ -32,6 +61,17 @@ export const commentsQueryRepository = {
 
 
         const comments: WithId<CommentInDb>[] = await commentCollection.find(search).skip(skip).limit(limit).sort(sort).toArray();
+        if(!comments){
+            return {
+                status: ResultStatus.NotFound,
+                errorMessage: "Comments is not found",
+                extensions: [{
+                    field: "Comments",
+                    message: "Comments is not found"
+                }],
+                data: null
+            }
+        }
         const totalCount = await commentCollection.countDocuments(search)
 
         const params: OutPutPagination = {
@@ -42,7 +82,11 @@ export const commentsQueryRepository = {
         }
 
         const commentsForFront: CommentOutPut[] = comments.map(commentMapp)
-        return finalCommentsMapperWithPago(commentsForFront, params)
+        return {
+            status: ResultStatus.Success,
+            extensions: [],
+            data: finalCommentsMapperWithPago(commentsForFront, params)
+        }
 
     }
 

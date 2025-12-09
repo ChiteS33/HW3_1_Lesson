@@ -1,7 +1,6 @@
 import {Request, Response} from 'express';
-import {HttpStatus} from '../../../core/types/http-statuses';
 import {blogsServices} from "../../application/blogs.service";
-import {blogsRepository} from "../../repositories/blogs.repository";
+import {resultCodeToHttpException} from "../../../common/mapper/resultCodeToHttp";
 
 
 export async function updateBlogHandler(req: Request, res: Response) {
@@ -9,11 +8,12 @@ export async function updateBlogHandler(req: Request, res: Response) {
     const id = req.params.id;
     const body = req.body;
 
-    const blog = await blogsRepository.findById(id);
-    if (!blog) {
-        return res.sendStatus(HttpStatus.NotFound)
+    const blog = await blogsServices.findById(id);
+    if(blog.status !== "Created"){
+        return res.sendStatus(resultCodeToHttpException(blog.status));
     }
+
     await blogsServices.update(id, body);
-    return res.sendStatus(HttpStatus.NoContent);
+    return res.sendStatus(resultCodeToHttpException(blog.status));
 
 }

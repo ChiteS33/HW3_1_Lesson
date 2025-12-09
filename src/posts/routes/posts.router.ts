@@ -20,10 +20,10 @@ export const postsRouter = Router({});
 
 
 postsRouter
-    .get('/:id/comments', idValidation, paginationValidation, getCommentsByPostId)  // поиск коментов по постID
-    .post('/:id/comments',authorizationMiddleware, idValidation, commentInputDtoValidation, inputValidationResultMiddleware, createCommentHandler)  // создание нового комента
-    .get('', paginationValidation, getPostListHandler)    //
-    .post('', superAdminGuardMiddleware, postInputDtoValidationWithBlogId, inputValidationResultMiddleware, createPostHandler) //
-    .get('/:id', idValidation, inputValidationResultMiddleware, getPostHandler) //
+    .get('/:id/comments', idValidation, paginationValidation, getCommentsByPostId)    //
+    .post('/:id/comments',authorizationMiddleware, idValidation, commentInputDtoValidation, inputValidationResultMiddleware, createCommentHandler) //
+    .get('', paginationValidation, getPostListHandler)  //
+    .post('', superAdminGuardMiddleware, postInputDtoValidationWithBlogId, inputValidationResultMiddleware, createPostHandler)  //
+    .get('/:id', idValidation, inputValidationResultMiddleware, getPostHandler)  //
     .put('/:id', superAdminGuardMiddleware, idValidation, postInputDtoValidationWithBlogId, inputValidationResultMiddleware, updatePostHandler) //
-    .delete('/:id', superAdminGuardMiddleware, idValidation, inputValidationResultMiddleware, deletePostHandler)  //
+    .delete('/:id', superAdminGuardMiddleware, idValidation, inputValidationResultMiddleware, deletePostHandler)     //

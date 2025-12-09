@@ -12,6 +12,6 @@ export const commentsRouter = Router({})
 
 
 commentsRouter
-    .get('/:id', idValidation, getCommentById)
-    .put('/:id', authorizationMiddleware, idValidation, commentInputDtoValidation, inputValidationResultMiddleware, updateComment)
-    .delete('/:id', authorizationMiddleware, idValidation, inputValidationResultMiddleware,  deleteComment)
+    .get('/:id', idValidation, getCommentById)            //
+    .put('/:id', authorizationMiddleware, idValidation, commentInputDtoValidation, inputValidationResultMiddleware, updateComment) //
+    .delete('/:id', authorizationMiddleware, idValidation, inputValidationResultMiddleware,  deleteComment)                        //

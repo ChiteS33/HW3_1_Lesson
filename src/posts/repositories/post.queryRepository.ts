@@ -13,7 +13,7 @@ import {ObjectResult, ResultStatus} from "../../common/types/objectResultTypes";
 
 export const postQueryRepository = {
 
-    async findAll(query: InPutPagination): Promise<FinalWithPagination<PostOutPut>> {
+    async findAll(query: InPutPagination): Promise<ObjectResult<FinalWithPagination<PostOutPut>>> {
 
         const pagination: PaginationForRepo = valuesPaginationMaker(query)
         const limit = pagination.pageSize
@@ -31,11 +31,16 @@ export const postQueryRepository = {
         }
 
         const postForFront: PostOutPut[] = preFinishValues.map(postMapper)
-        return finalPostMapper(postForFront, addValuesForFront)
+        return {
+            status: ResultStatus.Success,
+            extensions: [],
+            data: finalPostMapper(postForFront, addValuesForFront)
+
+        }
+
     },
     async findById(id: string): Promise<ObjectResult<PostOutPut | null>> {
         const post: WithId<PostInDb> | null = await postCollection.findOne({_id: new ObjectId(id)})
-
         if (!post) {
             return {
                 status: ResultStatus.NotFound,

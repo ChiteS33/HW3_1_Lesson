@@ -1,14 +1,17 @@
 import {Request, Response} from 'express';
 import {InPutPagination} from "../../../common/types/inPutPagination";
-import {PostOutPut} from "../../types/postOutPut";
-import {FinalWithPagination} from "../../../common/types/finalWithPagination";
 import {postQueryRepository} from "../../repositories/post.queryRepository";
+import {ResultStatus} from "../../../common/types/objectResultTypes";
+import {resultCodeToHttpException} from "../../../common/mapper/resultCodeToHttp";
 
 
 export async function getPostListHandler(req: Request, res: Response) {
 
     const query: InPutPagination = req.query
-    const posts: FinalWithPagination<PostOutPut> = await postQueryRepository.findAll(query)
 
-    res.send(posts);
+    const posts = await postQueryRepository.findAll(query)
+    if (posts.status !== ResultStatus.Success) {
+        return res.sendStatus(resultCodeToHttpException(posts.status))
+    }
+    return res.status(resultCodeToHttpException(posts.status)).send(posts.data)
 }

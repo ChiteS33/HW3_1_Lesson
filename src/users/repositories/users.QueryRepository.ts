@@ -13,13 +13,12 @@ import {valuesMakerWithSearchLoginAndEmail} from "../../common/mapper/valuesMake
 import {
     InPutPaginationWithSearchLoginTermAndSearchEMailTerm
 } from "../../common/types/inPutPaginationWithSearchLoginTermAndSearchEmailTerm";
-
-
+import {ObjectResult, ResultStatus} from "../../common/types/objectResultTypes";
 
 
 export const usersQueryRepository = {
 
-    async findAll(query: InPutPaginationWithSearchLoginTermAndSearchEMailTerm): Promise<FinalWithPagination<UserOutPut>> {
+    async findAll(query: InPutPaginationWithSearchLoginTermAndSearchEMailTerm): Promise<ObjectResult<FinalWithPagination<UserOutPut>>> {
 
         const pagination: PaginationWithSearchLoginTermAndSearchEMailTermForRepo = valuesMakerWithSearchLoginAndEmail(query)
 
@@ -46,15 +45,34 @@ export const usersQueryRepository = {
         }
 
         const userForFrontend: UserOutPut[] = users.map(userMapper)
-        return finalUserMapper(userForFrontend, params)
+        return {
+            status: ResultStatus.Success,
+            extensions: [],
+            data: finalUserMapper(userForFrontend, params)
+        }
+
 
     },
-    async findById(id: string): Promise<UserOutPut | null> {
+    async findById(userId: string): Promise<ObjectResult<UserOutPut | null>> {
 
-        const user: WithId<UserInDb> | null = await userCollection.findOne({_id: new ObjectId(id)})
+        const user: WithId<UserInDb> | null = await userCollection.findOne({_id: new ObjectId(userId)})
+        if (!user) {
+            return {
+                status: ResultStatus.NotFound,
+                errorMessage: "User not found",
+                extensions: [{
+                    field: "User",
+                    message: "User not found"
+                }],
+                data: null
+            }
+        }
 
-        if (!user) return null;
+        return {
+            status: ResultStatus.Created,
+            extensions: [],
+            data: userMapper(user)
+        }
 
-        return userMapper(user)
     },
 }

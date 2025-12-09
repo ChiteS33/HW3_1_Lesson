@@ -1,33 +1,113 @@
 import {postRepository} from "../repositories/post.repository";
 import {PostInDb} from "../types/postInDb";
-import {WithId} from "mongodb";
 import {PostInputDto} from "../types/post-input.dto";
-import {BlogInDb} from "../../blogs/types/blogInDb";
 import {PostInputDtoForBlog} from "../types/postInBlog";
 import {postMaker} from "../routes/mappers/postMaker";
-import {blogsRepository} from "../../blogs/repositories/blogs.repository";
 import {ObjectResult, ResultStatus} from "../../common/types/objectResultTypes";
+import {blogsServices} from "../../blogs/application/blogs.service";
 
 
 export const postsServices = {
 
-
-    async create(body: PostInputDto, blog: WithId<BlogInDb>): Promise<string> {
-
-        const newPost: PostInDb = postMaker(blog, body)
-
-        return await postRepository.create(newPost);
+    async findById(id: string): Promise<ObjectResult<any>> {
+        const result = await postRepository.findById(id);
+        if (!result) {
+            return {
+                status: ResultStatus.NotFound,
+                errorMessage: "Post not found",
+                extensions: [{
+                    field: "Post",
+                    message: "Post not found"
+                }],
+                data: null
+            }
+        }
+        return {
+            status: ResultStatus.Success,
+            extensions: [],
+            data: result
+        }
     },
-    async update(id: string, body: PostInputDto): Promise<string> {
+    async create(body: PostInputDto): Promise<ObjectResult<string | null>> {
+        const blog = await blogsServices.findById(body.blogId);
+        if (!blog) {
+            return {
+                status: ResultStatus.NotFound,
+                errorMessage: "Blog is not found",
+                extensions: [{
+                    field: "BlogId",
+                    message: "Blog is not found"
+                }],
+                data: null
+            }
+        }
 
-        return await postRepository.update(id, body);
+        const newPostId = await postRepository.create(postMaker(blog.data!, body))
+
+        return {
+            status: ResultStatus.Created,
+            extensions: [],
+            data: newPostId
+        }
     },
-    async delete(id: string): Promise<void> {
-        return await postRepository.delete(id);
+    async update(postId: string, body: PostInputDto): Promise<ObjectResult<string | null>> {
+        const post = await postsServices.findById(postId);
+        if (!post) {
+            return {
+                status: ResultStatus.NotFound,
+                errorMessage: "Post is not found",
+                extensions: [{
+                    field: "Post",
+                    message: "Post is not found",
+                }],
+                data: null
+            }
+        }
+        const blog = await blogsServices.findById(body.blogId);
+        if (!blog) {
+            return {
+                status: ResultStatus.NotFound,
+                errorMessage: "Blog is not found",
+                extensions: [{
+                    field: "Blog",
+                    message: "Blog is not found",
+                }],
+                data: null
+            }
+        }
+        const result = await postRepository.update(postId, body);
+
+        return {
+            status: ResultStatus.NoContent,
+            extensions: [],
+            data: result
+        }
+
+    },
+    async delete(postId: string): Promise<ObjectResult<null>> {
+        const post = await postsServices.findById(postId);
+        if (!post) {
+            return {
+                status: ResultStatus.NotFound,
+                errorMessage: "Post is not found",
+                extensions: [{
+                    field: "Post",
+                    message: "Post is not found"
+                }],
+                data: null
+            }
+        }
+        await postRepository.delete(postId);
+
+        return {
+            status: ResultStatus.NoContent,
+            extensions: [],
+            data: null
+        }
     },
     async createPostByBlogId(blogId: string, inputInfo: PostInputDtoForBlog,): Promise<ObjectResult<string | null>> {
 
-        const blog = await blogsRepository.findById(blogId);
+        const blog = await blogsServices.findById(blogId);
         if (!blog) {
             return {
                 status: ResultStatus.NotFound,
@@ -40,7 +120,7 @@ export const postsServices = {
             }
         }
 
-        const postForRepo: PostInDb = postMaker(blog, inputInfo);
+        const postForRepo: PostInDb = postMaker(blog.data!, inputInfo);
         const post = await postRepository.create(postForRepo)
 
         return {

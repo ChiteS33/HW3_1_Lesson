@@ -1,17 +1,20 @@
 import {Request, Response} from 'express';
-import {FinalWithPagination} from "../../../common/types/finalWithPagination";
-import {InPutPaginationWithSearchLoginTermAndSearchEMailTerm}
-    from "../../../common/types/inPutPaginationWithSearchLoginTermAndSearchEmailTerm";
-import {UserOutPut} from "../../types/userOutPut";
-import {HttpStatus} from "../../../core/types/http-statuses";
+import {
+    InPutPaginationWithSearchLoginTermAndSearchEMailTerm
+} from "../../../common/types/inPutPaginationWithSearchLoginTermAndSearchEmailTerm";
 import {usersQueryRepository} from "../../repositories/users.QueryRepository";
+import {ResultStatus} from "../../../common/types/objectResultTypes";
+import {resultCodeToHttpException} from "../../../common/mapper/resultCodeToHttp";
 
 
 export async function getUserListHandler(req: Request, res: Response) {
 
     const query: InPutPaginationWithSearchLoginTermAndSearchEMailTerm = req.query;
 
-    const users: FinalWithPagination<UserOutPut> = await usersQueryRepository.findAll(query);
+    const users = await usersQueryRepository.findAll(query);
+    if (users.status !== ResultStatus.Success) {
+        return res.sendStatus(resultCodeToHttpException(users.status));
+    }
 
-    res.status(HttpStatus.Ok).send(users);
+    return res.status(resultCodeToHttpException(users.status)).send(users.data);
 }
