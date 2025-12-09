@@ -5,9 +5,10 @@ import {resultCodeToHttpException} from "../../../common/mapper/resultCodeToHttp
 
 export async function getCommentById(req: Request, res: Response) {
 
-    const id = req.params.id;
+    const commentId = req.params.id;
 
-    const comment = await commentsQueryRepository.findById(id);
+    const comment = await commentsQueryRepository.findById(commentId);
+
     if (comment.status !== "Success") {
         return res.sendStatus(resultCodeToHttpException(comment.status));
     }

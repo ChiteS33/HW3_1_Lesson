@@ -5,7 +5,7 @@ import {settings} from "../settings";
 export const jwtService = {
 
     async createJWT(userId: string) {
-        return jwt.sign({userId}, settings.JWT_SECRET, {expiresIn: '10s'})
+        return jwt.sign({userId}, settings.JWT_SECRET, {expiresIn: '1h'})
 
     },
     async getUserIdByToken(token: string) {
@@ -18,7 +18,7 @@ export const jwtService = {
         }
     },
     async createRefreshToken(userId: string) {
-        return jwt.sign({userId}, settings.JWT_REFRESH_TOKEN, {expiresIn: '20s'})
+        return jwt.sign({userId}, settings.JWT_REFRESH_TOKEN, {expiresIn: '2h'})
     },
 
     async verifyRefreshToken(token: string) {

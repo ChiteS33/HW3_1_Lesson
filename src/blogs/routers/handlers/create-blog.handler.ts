@@ -4,7 +4,7 @@ import {blogsServices} from "../../application/blogs.service";
 import {BlogInputDto} from "../../types/blogInPutDto";
 import {blogsQueryRepository} from "../../repositories/blogs.queryRepository";
 import {BlogOutPut} from "../../types/blogOutPut";
-import {ObjectResult} from "../../../common/types/objectResultTypes";
+import {ObjectResult, ResultStatus} from "../../../common/types/objectResultTypes";
 import {resultCodeToHttpException} from "../../../common/mapper/resultCodeToHttp";
 
 
@@ -14,9 +14,10 @@ export async function createBlogHandler(req: Request, res: Response) {
     const createdBlog: ObjectResult<string> = await blogsServices.create(createBlogData);
 
     const foundBlog: ObjectResult<BlogOutPut | null> = await blogsQueryRepository.findById(createdBlog.data);
-    if (foundBlog.status !== "Created") {
+    console.log(foundBlog);
+    if (foundBlog.status !== "Success") {
         return  res.sendStatus(HttpStatus.InternalServerError)
     }
 
-    return  res.status(resultCodeToHttpException(foundBlog.status)).send(foundBlog.data);
+    return  res.status(resultCodeToHttpException(ResultStatus.Created)).send(foundBlog.data);
 }

@@ -5,11 +5,12 @@ import {PostInputDtoForBlog} from "../types/postInBlog";
 import {postMaker} from "../routes/mappers/postMaker";
 import {ObjectResult, ResultStatus} from "../../common/types/objectResultTypes";
 import {blogsServices} from "../../blogs/application/blogs.service";
+import {WithId} from "mongodb";
 
 
 export const postsServices = {
 
-    async findById(id: string): Promise<ObjectResult<any>> {
+    async findById(id: string): Promise<ObjectResult<WithId<PostInDb> | null>> {
         const result = await postRepository.findById(id);
         if (!result) {
             return {
@@ -29,8 +30,8 @@ export const postsServices = {
         }
     },
     async create(body: PostInputDto): Promise<ObjectResult<string | null>> {
-        const blog = await blogsServices.findById(body.blogId);
-        if (!blog) {
+               const blog = await blogsServices.findById(body.blogId);
+                if (!blog.data) {
             return {
                 status: ResultStatus.NotFound,
                 errorMessage: "Blog is not found",
@@ -52,7 +53,7 @@ export const postsServices = {
     },
     async update(postId: string, body: PostInputDto): Promise<ObjectResult<string | null>> {
         const post = await postsServices.findById(postId);
-        if (!post) {
+        if (!post.data) {
             return {
                 status: ResultStatus.NotFound,
                 errorMessage: "Post is not found",
@@ -64,7 +65,7 @@ export const postsServices = {
             }
         }
         const blog = await blogsServices.findById(body.blogId);
-        if (!blog) {
+        if (!blog.data) {
             return {
                 status: ResultStatus.NotFound,
                 errorMessage: "Blog is not found",
@@ -86,7 +87,7 @@ export const postsServices = {
     },
     async delete(postId: string): Promise<ObjectResult<null>> {
         const post = await postsServices.findById(postId);
-        if (!post) {
+        if (!post.data) {
             return {
                 status: ResultStatus.NotFound,
                 errorMessage: "Post is not found",
@@ -108,7 +109,7 @@ export const postsServices = {
     async createPostByBlogId(blogId: string, inputInfo: PostInputDtoForBlog,): Promise<ObjectResult<string | null>> {
 
         const blog = await blogsServices.findById(blogId);
-        if (!blog) {
+        if (!blog.data) {
             return {
                 status: ResultStatus.NotFound,
                 errorMessage: "Blog is not found",
@@ -131,6 +132,5 @@ export const postsServices = {
 
 
     }
-
 
 }

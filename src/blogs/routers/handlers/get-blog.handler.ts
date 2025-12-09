@@ -9,7 +9,7 @@ export async function getBlogHandler(req: Request, res: Response) {
     const blogId = req.params.id;
 
     const blog = await blogsQueryRepository.findById(blogId);
-    if(blog.status !== "Created") {
+    if(blog.status !== "Success") {
         return res.sendStatus(resultCodeToHttpException(blog.status))
     }
 

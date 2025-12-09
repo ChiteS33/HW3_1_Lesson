@@ -14,9 +14,10 @@ export async function createPostHandler(req: Request, res: Response) {
         return res.sendStatus(resultCodeToHttpException(createdPostId.status));
     }
     const createdPost = await postQueryRepository.findById(createdPostId.data!);
+
     if(createdPost.status !== ResultStatus.Success) {
         return res.sendStatus(resultCodeToHttpException(createdPost.status));
     }
 
-    return res.status(resultCodeToHttpException(createdPost.status)).send(createdPost.data);
+    return res.status(resultCodeToHttpException(ResultStatus.Created)).send(createdPost.data);
 }

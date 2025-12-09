@@ -1,6 +1,7 @@
 import {Request, Response} from 'express';
 import {blogsServices} from "../../application/blogs.service";
 import {resultCodeToHttpException} from "../../../common/mapper/resultCodeToHttp";
+import {ResultStatus} from "../../../common/types/objectResultTypes";
 
 export async function deleteBlogHandler(req: Request, res: Response) {
 
@@ -11,5 +12,5 @@ export async function deleteBlogHandler(req: Request, res: Response) {
     }
 
     await blogsServices.delete(id);
-     res.sendStatus(resultCodeToHttpException(blog.status));
+     res.sendStatus(resultCodeToHttpException(ResultStatus.NoContent));
 }

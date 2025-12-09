@@ -11,7 +11,8 @@ export async function getCommentsByPostId(req: Request, res: Response) {
     const query: InPutPagination = req.query;
 
     const comments = await commentsQueryRepository.findByPostId(postId, query);
-    if(comments.status !== ResultStatus.Success) {
+
+    if (comments.status !== ResultStatus.Success) {
         return res.sendStatus(resultCodeToHttpException(comments.status));
     }
 

@@ -67,7 +67,7 @@ export const blogsQueryRepository = {
         }
 
         return {
-            status: ResultStatus.Created,
+            status: ResultStatus.Success,
             extensions: [],
             data: blogMapper(foundBlog)
         }

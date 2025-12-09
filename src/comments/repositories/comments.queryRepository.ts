@@ -40,7 +40,7 @@ export const commentsQueryRepository = {
     async findByPostId(postId: string, query: InPutPagination): Promise<ObjectResult<FinalWithPagination<CommentOutPut> | null>> {
 
         const result = await postsServices.findById(postId);
-        if (!result) {
+        if (!result.data) {
             return {
                 status: ResultStatus.NotFound,
                 errorMessage: "Post not found",
@@ -61,7 +61,7 @@ export const commentsQueryRepository = {
 
 
         const comments: WithId<CommentInDb>[] = await commentCollection.find(search).skip(skip).limit(limit).sort(sort).toArray();
-        if(!comments){
+        if (!comments) {
             return {
                 status: ResultStatus.NotFound,
                 errorMessage: "Comments is not found",

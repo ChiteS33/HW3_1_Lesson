@@ -24,14 +24,15 @@ export const commentsServices = {
             }
         }
         return {
-            status: ResultStatus.NoContent,
+            status: ResultStatus.Success,
             extensions: [],
             data: result
         }
     },
     async create(user: WithId<UserInDb>, body: CommentInPut, postId: string): Promise<ObjectResult<string | null>> {
         const post = await postsServices.findById(postId);
-        if (!post) {
+
+        if (!post.data) {
             return {
                 status: ResultStatus.NotFound,
                 errorMessage: "Post is not found",
@@ -54,7 +55,7 @@ export const commentsServices = {
     },
     async update(id: string, body: CommentInPut, userLogin: string): Promise<ObjectResult<null>> {
         const foundComment = await commentsServices.findById(id)
-        if (foundComment.status !== ResultStatus.NoContent) {
+        if (!foundComment.data) {
             return {
                 status: ResultStatus.NotFound,
                 errorMessage: "Comment not found",
@@ -86,7 +87,7 @@ export const commentsServices = {
     async delete(id: string, userLogin: string): Promise<ObjectResult<void | null>> {
         const check: ObjectResult<WithId<CommentInDb> | null> = await commentsServices.findById(id);
 
-        if (check.status !== ResultStatus.NoContent) {
+        if (check.status !== ResultStatus.Success) {
             return {
                 status: ResultStatus.NotFound,
                 errorMessage: "Comment not found",

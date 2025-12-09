@@ -69,7 +69,7 @@ export const usersQueryRepository = {
         }
 
         return {
-            status: ResultStatus.Created,
+            status: ResultStatus.Success,
             extensions: [],
             data: userMapper(user)
         }
