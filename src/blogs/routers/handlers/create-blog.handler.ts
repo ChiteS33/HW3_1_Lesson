@@ -14,7 +14,7 @@ export async function createBlogHandler(req: Request, res: Response) {
     const createdBlog: ObjectResult<string> = await blogsServices.create(createBlogData);
 
     const foundBlog: ObjectResult<BlogOutPut | null> = await blogsQueryRepository.findById(createdBlog.data);
-    console.log(foundBlog);
+
     if (foundBlog.status !== "Success") {
         return  res.sendStatus(HttpStatus.InternalServerError)
     }

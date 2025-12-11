@@ -18,7 +18,7 @@ export async function createPostByBlogIdHandler(req: Request, res: Response,) {
         return res.sendStatus(resultCodeToHttpException(createResult.status));
     }
     const createdPost: ObjectResult<PostOutPut | null> = await postQueryRepository.findById(createResult.data!)
-    console.log(createdPost)
+
     if(createdPost.status !== "Success" ){
         return res.sendStatus(resultCodeToHttpException(createResult.status));
             }

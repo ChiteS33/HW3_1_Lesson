@@ -6,11 +6,8 @@ import {resultCodeToHttpException} from "../../../common/mapper/resultCodeToHttp
 export async function refreshTokenHandler(req: Request, res: Response) {
 
     const refreshToken = req.cookies.refreshToken;
-    if (!refreshToken) {
-        return  res.sendStatus(401)
-    }
 
-    const result = await authServices.refreshToken(refreshToken)
+    const result = await authServices.refreshPairTokens(refreshToken)
     if (result.status !== "Success" || !result.data) {
         return res.sendStatus(resultCodeToHttpException(result.status))
     }
@@ -25,3 +22,11 @@ export async function refreshTokenHandler(req: Request, res: Response) {
     return res.status(resultCodeToHttpException(result.status)).send({accessToken: result.data.newAccessToken});
 }
 
+
+
+// 1. Берём рефрешь токен
+// 2. Проверяем его время жизни
+// 3. Ищем в БД такую сессию ( userId, deviceId)
+// 4. Сравниваем даты (iat)
+// 5. Генерим новую пару
+// 6. Кидаем в БД новый iat

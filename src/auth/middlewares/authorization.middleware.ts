@@ -6,7 +6,6 @@ import {HttpStatus} from "../../core/types/http-statuses";
 export const authorizationMiddleware = async (req: Request, res: Response, next: NextFunction) => {
     if (!req.headers.authorization) return res.sendStatus(HttpStatus.Unauthorized);
 
-
     const token = req.headers.authorization.split(' ')[1];
 
     const userId: any = await jwtService.getUserIdByToken(token);

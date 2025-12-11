@@ -15,7 +15,7 @@ export async function createCommentHandler(req: Request, res: Response) {
     const content: CommentInPut = req.body;
 
     const commentId = await commentsServices.create(user, content, postId);
-    // console.log (commentId);
+
     if (commentId.status !== ResultStatus.Created) {
         return res.sendStatus(resultCodeToHttpException(commentId.status))
     }

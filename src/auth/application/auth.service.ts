@@ -1,6 +1,6 @@
 import {usersRepository} from "../../users/repositories/users.repository";
 import {hashServices} from "../../common/service/bcrypt.service";
-import {WithId} from "mongodb";
+import {ObjectId, WithId} from "mongodb";
 import {UserInDb} from "../../users/types/userInDb";
 import {emailAdapter} from "../../adapters/email-adapter";
 import {add} from "date-fns";
@@ -9,7 +9,10 @@ import {UserInputDto} from "../../users/types/userInputDto";
 import {ObjectResult, ResultStatus} from "../../common/types/objectResultTypes";
 import {jwtService} from "../../common/service/jwt-service";
 import {jwtDecode} from "jwt-decode";
-import {authRepository} from "../repositories/auth.repository";
+import {deviceMapperForRepo} from "../../securityDevices/routes/mappers/deviceMapperForRepo";
+import {Payload} from "../../common/types/payload";
+import {devicesCollection} from "../../db/mongo.db";
+import {devicesServices} from "../../securityDevices/application/securityDevices.service";
 
 
 export const authServices = {
@@ -67,7 +70,7 @@ export const authServices = {
             data: null
         }
         const newUser: UserInDb = valuesUserMakerForRepo(body, passwordHash)
-         await usersRepository.create(newUser)
+        await usersRepository.create(newUser)
         await emailAdapter.sendEmail(newUser.email, "ChiteS", newUser.emailConfirmation.confirmationCode)
 
         return {
@@ -161,16 +164,24 @@ export const authServices = {
         }
 
     },
-    async login(loginOrEmail: string, password: string): Promise<ObjectResult<{ token: string, refreshToken: string} | null>> {
+    async login(loginOrEmail: string, password: string, deviceName: any, ip: any): Promise<ObjectResult<{
+        token: string,
+        refreshToken: string
+    } | null>> {
         const user = await authServices.checking(loginOrEmail, password)
         if (user.status !== ResultStatus.Success) return {
             status: user.status,
             extensions: user.extensions,
             data: null
         }
+        const userId = user.data!._id.toString()
 
-        const token = await jwtService.createJWT(user.data!._id.toString());
-        const refreshToken = await jwtService.createRefreshToken(user.data!._id.toString())
+        const token = await jwtService.createJWT(userId);
+        const refreshToken = await jwtService.createRefreshToken(userId)
+        const payload: Payload = jwtDecode(refreshToken)
+
+        await devicesServices.createSession(deviceMapperForRepo(payload, deviceName, ip))
+
 
         return {
             status: ResultStatus.Success,
@@ -178,48 +189,53 @@ export const authServices = {
             data: {token, refreshToken}
         }
     },
-    async refreshToken(refreshToken: string): Promise<any> {
+    async refreshPairTokens(refreshToken: string): Promise<any> {
 
-        if (!refreshToken) {
+
+        const payloadRefreshToken: Payload = jwtDecode(refreshToken)
+        // const oldIat = new Date(payloadRefreshToken.iat)
+        const userId = payloadRefreshToken.userId
+        const deviceId = payloadRefreshToken.deviceId
+
+        const foundSession = await devicesCollection.findOne({
+            userId: new ObjectId(userId), deviceId: new ObjectId(deviceId)
+        })
+        if (!foundSession) {
             return {
-                status: ResultStatus.Unauthorized,
+                status: ResultStatus.NotFound,
+                errorMessage: "Session not found",
                 extensions: [{
-                    field: "refreshToken",
-                    message: "refreshToken is not founded"
+                    field: "sessionId",
+                    message: "Session not found"
                 }],
                 data: null
             }
-        }                                         // проверка на наличие токена
-        const payloadRefreshToken: Payload = jwtDecode(refreshToken)     // достали payload
-        const timeRefreshToken = payloadRefreshToken.exp         // достали expiresIn
-        const id = payloadRefreshToken.userId
-        const userId = await jwtService.verifyRefreshToken(refreshToken);
-        if (!userId) {
-            return {
-                status: ResultStatus.Unauthorized,
-                extensions: [{
-                    field: "refreshToken",
-                    message: "Refresh token expired or invalid"
-                }],
-                data: null
-            };
         }
 
-        const checkToken = await authRepository.findTokenInBlackList(refreshToken)   // проверка в black List
-        if (checkToken) return {
-            status: ResultStatus.Unauthorized,
-            extensions: [{
-                field: "refreshToken",
-                message: "refreshToken is dead",
-            }],
-            data: null
-        }                     // на его наличие
+        // if (oldIat !== foundSession.iat) {
+        //     return {
+        //         status: ResultStatus.BadRequest,
+        //         errorMessage: "Refresh token expired or invalid",
+        //         extensions: [{
+        //             field: "refreshToken",
+        //             message: "Refresh token expired or invalid"
+        //         }],
+        //         data: null
+        //     }
+        // }
 
-         await authRepository.pushTokenInDb(refreshToken, timeRefreshToken) // пуш в БД
+        const newAccessToken = await jwtService.createJWT(userId)
+        const newRefreshToken = await jwtService.createRefreshToken(userId, deviceId)
+
+        const newPayload: Payload = jwtDecode(newRefreshToken)
+        const newIat = newPayload.iat
 
 
-        const newAccessToken = await jwtService.createJWT(id)                // создание нового токена
-        const newRefreshToken = await jwtService.createRefreshToken(id)      // создание нового refreshToken
+        await devicesCollection.updateOne({
+                userId: new ObjectId(userId),
+                deviceId: new ObjectId(deviceId)
+            },
+            {$set: {iat: new Date(newIat)}})
 
         return {
             status: ResultStatus.Success,
@@ -230,45 +246,35 @@ export const authServices = {
 
 
     async logout(refreshToken: string): Promise<any> {
-        if (!refreshToken) return {
-            status: ResultStatus.Unauthorized,
-            extensions: [],
-            data: null
-        }  // проверка на наличие Токена
 
-        const userId = await jwtService.verifyRefreshToken(refreshToken);
-        if (!userId) {
+        const foundSession = await devicesServices.findByUserIdAndDeviceId(refreshToken)
+        if (!foundSession.data) {
             return {
-                status: ResultStatus.Unauthorized,
-                extensions: [{ message: 'Refresh token expired or invalid' }],
+                status: ResultStatus.NotFound,
+                errorMessage: "Session not found",
+                extensions: [{
+                    field: "sessionId",
+                    message: "Session not found",
+                }],
                 data: null
-            };
+            }
         }
 
-        const payload: Payload = jwtDecode(refreshToken)
-        const expiresIn = payload.exp
-
-        const result = await authRepository.findTokenInBlackList(refreshToken)  // Ищем его в БД
-        if (result) return {
-            status: ResultStatus.Unauthorized,
-            extensions: [],
-            data: null
-        }                    // если нашли, то он не валидный
-
-         await authRepository.pushTokenInDb(refreshToken, expiresIn)  // запушили в BL
+        await devicesCollection.deleteOne({_id: new ObjectId(foundSession.data._id)})
         return {
             status: ResultStatus.NoContent,
             extensions: [],
             data: null
         }
+
+
     }
 }
 
 
-export type Payload = {
-    userId: string,
-    iat: number,
-    exp: number,
-}
+
+
+
+
 
 
