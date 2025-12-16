@@ -1,12 +1,21 @@
 import express, {Express} from 'express';
 import {testingRouter} from './testing/routers/testing.router';
-import {AUTH_PATH, BLOGS_PATH, COMMENT_PATH, POSTS_PATH, TESTING_PATH, USERS_PATH} from './core/paths/paths';
+import {
+    AUTH_PATH,
+    BLOGS_PATH,
+    COMMENT_PATH,
+    DEVICES_PATH,
+    POSTS_PATH,
+    TESTING_PATH,
+    USERS_PATH
+} from './core/paths/paths';
 import {blogsRouter} from "./blogs/routers/blogs.router";
 import {postsRouter} from "./posts/routes/posts.router";
 import {usersRouter} from "./users/routes/users.router";
 import {authRouter} from "./auth/routers/auth.router";
 import {commentsRouter} from "./comments/routers/comments.router";
 import cookieParser from "cookie-parser";
+import {devicesRouter} from "./securityDevices/routes/devicesRouter";
 
 export const setupApp = (app: Express) => {
     app.use(express.json());
@@ -21,8 +30,7 @@ export const setupApp = (app: Express) => {
     app.use(COMMENT_PATH, commentsRouter);
     app.use(AUTH_PATH, authRouter);
     app.use(TESTING_PATH, testingRouter);
-
-
+    app.use(DEVICES_PATH, devicesRouter)
 
 
     return app;

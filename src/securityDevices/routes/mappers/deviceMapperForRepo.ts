@@ -6,9 +6,9 @@ export const deviceMapperForRepo = (payload: Payload, deviceName: string, ip: st
     return {
         userId: new ObjectId(payload.userId),
         deviceId: new ObjectId(payload.deviceId),
-        iat: new Date(payload.iat),
+        iat: new Date(payload.iat * 1000),
         deviceName: deviceName,
         ip: ip,
-        exp: new Date(payload.exp)
+        exp: new Date(payload.exp * 1000)
     }
 }

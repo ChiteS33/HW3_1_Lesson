@@ -13,17 +13,18 @@ import {authEmailValidation} from "../validation/emailInPutValidation";
 import {refreshTokenHandler} from "./handlers/post-refreshToken.handler";
 import {logoutHandler} from "./handlers/post-logout.handler";
 import {refreshTokenMiddleware} from "../middlewares/refreshToken.middleware";
+import {checkRequestCounter} from "../middlewares/checkRequestCounter";
 
 
 
 export const authRouter = Router({});
 
 authRouter
-    .post('/login', loginOrEmailValidation, inputValidationResultMiddleware, tryLoginUserHandler)
-    .post('/refresh-token', refreshTokenMiddleware, refreshTokenHandler)
-    .post('/registration-confirmation', codeInPutValidation, inputValidationResultMiddleware, confirmEmailHandler)
-    .post('/registration',userInputDtoValidation, inputValidationResultMiddleware, registrationInSystemHandler)
-    .post('/registration-email-resending', authEmailValidation, inputValidationResultMiddleware, resendEmailHandler)
+    .post('/login', checkRequestCounter, loginOrEmailValidation, inputValidationResultMiddleware, tryLoginUserHandler)
+    .post('/refresh-token', checkRequestCounter, refreshTokenMiddleware, refreshTokenHandler)
+    .post('/registration-confirmation', checkRequestCounter,  codeInPutValidation, inputValidationResultMiddleware, confirmEmailHandler)
+    .post('/registration',checkRequestCounter, userInputDtoValidation, inputValidationResultMiddleware, registrationInSystemHandler)
+    .post('/registration-email-resending', checkRequestCounter, authEmailValidation, inputValidationResultMiddleware, resendEmailHandler)
     .post('/logout', refreshTokenMiddleware, logoutHandler)
     .get('/me', authorizationMiddleware, inputValidationResultMiddleware, getInfoAboutUserHandler)
 

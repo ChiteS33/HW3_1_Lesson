@@ -10,7 +10,7 @@ import {DeviceOutPut} from "../types/deviceOutPut";
 export const devicesQueryRepository = {
 
 
-    async findAllDevicesByUserId(userId: any,): Promise<ObjectResult<DeviceOutPut | null>> {
+    async findAllDevicesByUserId(userId: any,): Promise<ObjectResult<DeviceOutPut[] | null>> {
 
         const currentDate = new Date();
 
@@ -19,7 +19,8 @@ export const devicesQueryRepository = {
             exp: {$gt: currentDate}
         }).toArray();
 
-        const resultForFront: DeviceOutPut = deviceFinalMake(result)
+        const resultForFront: DeviceOutPut[] = result.map(deviceFinalMake)
+
 
         return {
             status: ResultStatus.Success,

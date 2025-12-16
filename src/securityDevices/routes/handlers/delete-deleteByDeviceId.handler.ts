@@ -6,10 +6,11 @@ import {ResultStatus} from "../../../common/types/objectResultTypes";
 
 export async function deleteByDeviceId(req: Request, res: Response) {
 
-    const sessionId = req.params.id;
+    const deviceId: string = req.params.id;
     const refreshToken = req.cookies.refreshToken;
 
-    const result = await devicesServices.deleteByDeviceId(refreshToken, sessionId);
+    const result = await devicesServices.deleteByDeviceId(refreshToken, deviceId);
+
     if (result.status !== ResultStatus.NoContent) {
         return res.status(resultCodeToHttpException(result.status)).send(result.extensions);
     }

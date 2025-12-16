@@ -1,6 +1,7 @@
 import {Request, Response} from 'express';
 import {authServices} from "../../application/auth.service";
 import {resultCodeToHttpException} from "../../../common/mapper/resultCodeToHttp";
+import {ResultStatus} from "../../../common/types/objectResultTypes";
 
 
 export async function refreshTokenHandler(req: Request, res: Response) {
@@ -9,7 +10,7 @@ export async function refreshTokenHandler(req: Request, res: Response) {
 
     const result = await authServices.refreshPairTokens(refreshToken)
     if (result.status !== "Success" || !result.data) {
-        return res.sendStatus(resultCodeToHttpException(result.status))
+        return res.sendStatus(resultCodeToHttpException(ResultStatus.Unauthorized))
     }
 
 

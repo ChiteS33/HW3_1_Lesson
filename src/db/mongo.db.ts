@@ -4,15 +4,15 @@ import {BlogInDb} from "../blogs/types/blogInDb";
 import {PostInDb} from "../posts/types/postInDb";
 import {UserInDb} from "../users/types/userInDb";
 import {CommentInDb} from "../comments/types/commentInDb";
-import {RefreshTokenInDb} from "../common/types/blackListType";
 import {DeviceInDb} from "../securityDevices/types/deviceInDb";
+import {RequestCounter} from "../common/types/requestCounter";
 
 const BLOG_COLLECTION_NAME = 'blogs';
 const POST_COLLECTION_NAME = 'posts';
 const USER_COLLECTION_NAME = 'users';
 const COMMENTS_COLLECTION_NAME = 'comments';
-const BLACK_LIST_NAME = 'blackList'
 const DEVICES_COLLECTION_NAME = 'devices';
+const REQUEST_COLLECTION_NAME = 'requests';
 
 
 export let client: MongoClient;
@@ -20,8 +20,8 @@ export let blogCollection: Collection<BlogInDb>;
 export let postCollection: Collection<PostInDb>;
 export let userCollection: Collection<UserInDb>
 export let commentCollection: Collection<CommentInDb>;
-export let blackListCollection: Collection<RefreshTokenInDb>
 export let devicesCollection: Collection<DeviceInDb>
+export let requestCounterCollection: Collection<RequestCounter>
 
 
 export async function runDB(url: string): Promise<void> {
@@ -33,8 +33,8 @@ export async function runDB(url: string): Promise<void> {
     postCollection = db.collection<PostInDb>(POST_COLLECTION_NAME);
     userCollection = db.collection<UserInDb>(USER_COLLECTION_NAME);
     commentCollection = db.collection<CommentInDb>(COMMENTS_COLLECTION_NAME);
-    blackListCollection = db.collection<RefreshTokenInDb>(BLACK_LIST_NAME)
     devicesCollection = db.collection<DeviceInDb>(DEVICES_COLLECTION_NAME);
+    requestCounterCollection = db.collection<RequestCounter>(REQUEST_COLLECTION_NAME);
 
 
     try {
@@ -46,4 +46,15 @@ export async function runDB(url: string): Promise<void> {
         throw new Error(`❌ Database not connected: ${e}`);
     }
 }
+
+
+
+
+
+
+
+
+
+
+
 

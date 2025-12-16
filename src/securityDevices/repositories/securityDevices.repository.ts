@@ -5,15 +5,15 @@ import {ObjectId} from "mongodb";
 export const devicesRepository = {
 
 
-    async deleteById(userId: string): Promise<void> {
+    async deleteById(deviceId: string): Promise<void> {
 
-        await devicesCollection.deleteOne({userId: new ObjectId(userId)});
+        await devicesCollection.deleteOne({deviceId: new ObjectId(deviceId)});
     },
-    async deleteAlmostAll(userId: string, deviceName: any): Promise<void> {
+    async deleteAlmostAll(userId: string, deviceId: any): Promise<void> {
 
         await devicesCollection.deleteMany({
             userId: new ObjectId(userId),
-            deviceName: {$ne: deviceName}
+            deviceId: {$ne: new ObjectId(deviceId)}
         })
     },
     async createSession(info: any): Promise<string> {

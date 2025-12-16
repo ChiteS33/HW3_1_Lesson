@@ -71,7 +71,7 @@ export const authServices = {
         }
         const newUser: UserInDb = valuesUserMakerForRepo(body, passwordHash)
         await usersRepository.create(newUser)
-        await emailAdapter.sendEmail(newUser.email, "ChiteS", newUser.emailConfirmation.confirmationCode)
+        emailAdapter.sendEmail(newUser.email, "ChiteS", newUser.emailConfirmation.confirmationCode)
 
         return {
             status: ResultStatus.NoContent,
@@ -156,7 +156,7 @@ export const authServices = {
         const newExpirationDate = add(new Date(), {hours: 1})
 
         await usersRepository.updateConfirmationCode(newConfirmationCode, newExpirationDate, userId)
-        await emailAdapter.sendEmail(foundEmail.email, "ChiteS", newConfirmationCode)
+        emailAdapter.sendEmail(foundEmail.email, "ChiteS", newConfirmationCode)
         return {
             status: ResultStatus.NoContent,
             extensions: [],
@@ -178,7 +178,7 @@ export const authServices = {
 
         const token = await jwtService.createJWT(userId);
         const refreshToken = await jwtService.createRefreshToken(userId)
-        const payload: Payload = jwtDecode(refreshToken)
+        const payload: Payload = jwtDecode(refreshToken)                                       // перенести в сервис
 
         await devicesServices.createSession(deviceMapperForRepo(payload, deviceName, ip))
 
@@ -193,49 +193,28 @@ export const authServices = {
 
 
         const payloadRefreshToken: Payload = jwtDecode(refreshToken)
-        // const oldIat = new Date(payloadRefreshToken.iat)
         const userId = payloadRefreshToken.userId
         const deviceId = payloadRefreshToken.deviceId
-
-        const foundSession = await devicesCollection.findOne({
-            userId: new ObjectId(userId), deviceId: new ObjectId(deviceId)
-        })
-        if (!foundSession) {
-            return {
-                status: ResultStatus.NotFound,
-                errorMessage: "Session not found",
-                extensions: [{
-                    field: "sessionId",
-                    message: "Session not found"
-                }],
-                data: null
-            }
-        }
-
-        // if (oldIat !== foundSession.iat) {
-        //     return {
-        //         status: ResultStatus.BadRequest,
-        //         errorMessage: "Refresh token expired or invalid",
-        //         extensions: [{
-        //             field: "refreshToken",
-        //             message: "Refresh token expired or invalid"
-        //         }],
-        //         data: null
-        //     }
-        // }
 
         const newAccessToken = await jwtService.createJWT(userId)
         const newRefreshToken = await jwtService.createRefreshToken(userId, deviceId)
 
         const newPayload: Payload = jwtDecode(newRefreshToken)
         const newIat = newPayload.iat
+        const newExp = newPayload.exp
+
 
 
         await devicesCollection.updateOne({
                 userId: new ObjectId(userId),
                 deviceId: new ObjectId(deviceId)
             },
-            {$set: {iat: new Date(newIat)}})
+            {
+                $set: {
+                    iat: new Date(newIat * 1000),
+                    exp: new Date(newExp * 1000)
+                }
+            })
 
         return {
             status: ResultStatus.Success,
@@ -248,6 +227,7 @@ export const authServices = {
     async logout(refreshToken: string): Promise<any> {
 
         const foundSession = await devicesServices.findByUserIdAndDeviceId(refreshToken)
+
         if (!foundSession.data) {
             return {
                 status: ResultStatus.NotFound,

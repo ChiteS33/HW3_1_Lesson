@@ -14,12 +14,13 @@ export async function tryLoginUserHandler(req: Request, res: Response) {
         res.status(resultCodeToHttpException(result.status)).send({errorsMessages: result.extensions})
         return
     }
-    console.log(`Refresh token = ${result.data.refreshToken}`)
+
+
     res.cookie('refreshToken', result.data.refreshToken, {
         httpOnly: true,
         secure: true,
         sameSite: 'none',
-        maxAge: 20000
+        maxAge: 20000000                        // 20000
     });
 
 

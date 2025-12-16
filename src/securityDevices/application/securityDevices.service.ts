@@ -41,11 +41,13 @@ export const devicesServices = {
             data: sessionId
         }
     },
-    async deleteAllExcludeCurrentUser(refreshToken: any, deviceName: any): Promise<ObjectResult<null>> {
+    async deleteAllExcludeCurrentUser(refreshToken: any): Promise<ObjectResult<null>> {
 
         const payloadRefreshToken: Payload = jwtDecode(refreshToken)
+        const deviceId = payloadRefreshToken.deviceId
         const userId: string = payloadRefreshToken.userId
-        await devicesRepository.deleteAlmostAll(userId, deviceName)
+
+        await devicesRepository.deleteAlmostAll(userId, deviceId)
 
         return {
             status: ResultStatus.NoContent,
@@ -54,9 +56,9 @@ export const devicesServices = {
         }
     },
 
-    async findSessionById(sessionId: any): Promise<ObjectResult<any>> {
+    async findSessionById(deviceId: any): Promise<ObjectResult<WithId<DeviceInDb> | null>> {
 
-        const result = await devicesCollection.findOne({_id: sessionId})
+        const result = await devicesCollection.findOne({deviceId: new ObjectId(deviceId)})
         if (!result) {
             return {
                 status: ResultStatus.NotFound,
@@ -75,22 +77,38 @@ export const devicesServices = {
         }
     },
 
+    async deleteByDeviceId(refreshToken: any, deviceId: string): Promise<ObjectResult<any>> {
 
-    async deleteByDeviceId(refreshToken: any, sessionId: any): Promise<ObjectResult<any>> {
-
-        const foundSession = await devicesServices.findSessionById(sessionId)
-        if(!foundSession.data) {
-            return {
-                status: ResultStatus.NotFound,
-                errorMessage: foundSession.errorMessage,
-                extensions: foundSession.extensions,
-                data: null
-            }
-        }
         const payloadRefreshToken: Payload = jwtDecode(refreshToken)
         const userId: string = payloadRefreshToken.userId
 
-        await devicesRepository.deleteById(userId)
+        const foundSessionByUserIdFromToken: ObjectResult<WithId<DeviceInDb> | null> = await devicesServices.findSessionById(deviceId)
+
+        if (!foundSessionByUserIdFromToken.data) {
+            return {
+                status: ResultStatus.NotFound,
+                errorMessage: foundSessionByUserIdFromToken.errorMessage,
+                extensions: foundSessionByUserIdFromToken.extensions,
+                data: null
+            }
+        }
+        const userIdFromSession = foundSessionByUserIdFromToken.data.userId
+
+
+
+        if (userIdFromSession.toString() !== userId) {
+            return {
+                status: ResultStatus.Forbidden,
+                errorMessage: "User has`t rights",
+                extensions: [{
+                    field: 'userId',
+                    message: 'User has`t rights'
+                }],
+                data: null
+            }
+        }
+
+        await devicesRepository.deleteById(deviceId)
 
         return {
             status: ResultStatus.NoContent,
