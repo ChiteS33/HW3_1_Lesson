@@ -1,15 +1,22 @@
-import {blogsRepository} from "../repositories/blogs.repository";
 import {BlogInputDto} from "../types/blogInPutDto";
 import {blogsValueMaker} from "../routers/mappers/blogsMapperForRepo";
 import {ObjectResult, ResultStatus} from "../../common/types/objectResultTypes";
 import {BlogInDb} from "../types/blogInDb";
 import {WithId} from "mongodb";
+import {BlogsRepository} from "../repositories/blogs.repository";
 
 
-export const blogsServices = {
+
+export class BlogsService {
+
+    blogsRepository: BlogsRepository;
+
+    constructor(blogsRepository: BlogsRepository) {
+        this.blogsRepository = blogsRepository;
+    }
 
     async findById(id: string): Promise<ObjectResult<WithId<BlogInDb> | null>> {
-        const foundBlog = await blogsRepository.findById(id);
+        const foundBlog = await this.blogsRepository.findById(id);
         if (!foundBlog) return {
             status: ResultStatus.NotFound,
             errorMessage: " blogId is not founded",
@@ -24,31 +31,29 @@ export const blogsServices = {
             extensions: [],
             data: foundBlog
         }
-    },
+    }
 
-    async create(inputInfo: BlogInputDto): Promise<ObjectResult<string>> {
-
+    async createBlog(inputInfo: BlogInputDto): Promise<ObjectResult<string>> {
         const newBlog = blogsValueMaker(inputInfo);
-        const createdBlogId = await blogsRepository.create(newBlog);
-
+        const createdBlogId = await this.blogsRepository.create(newBlog);
         return {
             status: ResultStatus.Created,
             extensions: [],
             data: createdBlogId
         }
+    }
 
-
-    },
     async update(id: string, inputInfo: BlogInputDto): Promise<ObjectResult<void | null>> {
-        await blogsRepository.update(id, inputInfo);
+        await this.blogsRepository.update(id, inputInfo);
         return {
             status: ResultStatus.NoContent,
             extensions: [],
             data: null
         }
-    },
+    }
+
     async delete(id: string): Promise<ObjectResult<void | null>> {
-        await blogsRepository.delete(id);
+        await this.blogsRepository.delete(id);
         return {
             status: ResultStatus.NoContent,
             extensions: [],

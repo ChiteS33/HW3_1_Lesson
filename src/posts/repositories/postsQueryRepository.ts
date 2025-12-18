@@ -11,34 +11,30 @@ import {valuesPaginationMaker} from "../../common/mapper/valuesPaginationMaker";
 import {ObjectResult, ResultStatus} from "../../common/types/objectResultTypes";
 
 
-export const postQueryRepository = {
+export class PostsQueryRepository {
+
 
     async findAll(query: InPutPagination): Promise<ObjectResult<FinalWithPagination<PostOutPut>>> {
-
         const pagination: PaginationForRepo = valuesPaginationMaker(query)
         const limit = pagination.pageSize
         const skip = (pagination.pageSize * pagination.pageNumber) - pagination.pageSize
         const sort = {[pagination.sortBy]: pagination.sortDirection}
-
         const preFinishValues: WithId<PostInDb>[] = await postCollection.find().skip(skip).limit(limit).sort(sort).toArray()
         const totalCount = await postCollection.countDocuments()
-
         const addValuesForFront = {
             pagesCount: Math.ceil(totalCount / pagination.pageSize),
             page: pagination.pageNumber,
             pageSize: limit,
             totalCount: totalCount,
         }
-
         const postForFront: PostOutPut[] = preFinishValues.map(postMapper)
         return {
             status: ResultStatus.Success,
             extensions: [],
             data: finalPostMapper(postForFront, addValuesForFront)
-
         }
+    }
 
-    },
     async findById(id: string): Promise<ObjectResult<PostOutPut | null>> {
         const post: WithId<PostInDb> | null = await postCollection.findOne({_id: new ObjectId(id)})
         if (!post) {
@@ -51,20 +47,15 @@ export const postQueryRepository = {
                 }],
                 data: null
             }
-
         }
-
         return {
             status: ResultStatus.Success,
             extensions: [],
             data: postMapper(post)
         }
-
-
-    },
+    }
 
     async findPostsByBlogId(id: string, query: InPutPagination): Promise<ObjectResult<FinalWithPagination<PostOutPut>>> {
-
         const pagination: PaginationForRepo = valuesPaginationMaker(query)
         const limit = pagination.pageSize
         const skip = (pagination.pageSize * pagination.pageNumber) - pagination.pageSize;
@@ -73,22 +64,20 @@ export const postQueryRepository = {
         }
         const posts = await postCollection.find({blogId: new ObjectId(id)}).skip(skip).limit(limit).sort(sorting).toArray();
         const totalCount = await postCollection.countDocuments({blogId: new ObjectId(id)})
-
         const addValuesForFront = {
             pagesCount: Math.ceil(totalCount / pagination.pageSize),
             page: pagination.pageNumber,
             pageSize: limit,
             totalCount: totalCount,
         }
-
         const postsForFront: PostOutPut[] = posts.map(postMapper)
         return {
             status: ResultStatus.Success,
             extensions: [],
             data: finalPostMapper(postsForFront, addValuesForFront)
         }
-
     }
+
 
 }
 

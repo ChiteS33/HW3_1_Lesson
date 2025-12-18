@@ -6,6 +6,8 @@ import {UserInDb} from "../users/types/userInDb";
 import {CommentInDb} from "../comments/types/commentInDb";
 import {DeviceInDb} from "../securityDevices/types/deviceInDb";
 import {RequestCounter} from "../common/types/requestCounter";
+import {RecoveryPassInDb} from "../common/types/recoveryPassInDb";
+
 
 const BLOG_COLLECTION_NAME = 'blogs';
 const POST_COLLECTION_NAME = 'posts';
@@ -13,6 +15,7 @@ const USER_COLLECTION_NAME = 'users';
 const COMMENTS_COLLECTION_NAME = 'comments';
 const DEVICES_COLLECTION_NAME = 'devices';
 const REQUEST_COLLECTION_NAME = 'requests';
+const RECOVERY_COLLECTION_NAME = 'recovery';
 
 
 export let client: MongoClient;
@@ -22,7 +25,7 @@ export let userCollection: Collection<UserInDb>
 export let commentCollection: Collection<CommentInDb>;
 export let devicesCollection: Collection<DeviceInDb>
 export let requestCounterCollection: Collection<RequestCounter>
-
+export let recoveryPassCollection: Collection<RecoveryPassInDb>
 
 export async function runDB(url: string): Promise<void> {
     client = new MongoClient(url);
@@ -35,6 +38,7 @@ export async function runDB(url: string): Promise<void> {
     commentCollection = db.collection<CommentInDb>(COMMENTS_COLLECTION_NAME);
     devicesCollection = db.collection<DeviceInDb>(DEVICES_COLLECTION_NAME);
     requestCounterCollection = db.collection<RequestCounter>(REQUEST_COLLECTION_NAME);
+    recoveryPassCollection = db.collection<RecoveryPassInDb>(RECOVERY_COLLECTION_NAME);
 
 
     try {
@@ -46,7 +50,6 @@ export async function runDB(url: string): Promise<void> {
         throw new Error(`❌ Database not connected: ${e}`);
     }
 }
-
 
 
 

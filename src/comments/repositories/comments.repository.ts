@@ -4,22 +4,18 @@ import {CommentInDb} from "../types/commentInDb";
 import {CommentInPut} from "../types/commentInPut";
 
 
-export const commentsRepository = {
+export class CommentsRepository {
 
     async create(newComments: CommentInDb): Promise<string> {
         const comment = await commentCollection.insertOne((newComments))
         return comment.insertedId.toString()
-    },
+    }
 
     async findById(id: string): Promise<WithId<CommentInDb> | null> {
-        return  await commentCollection.findOne({_id: new ObjectId(id)});
-        // const foundComment: WithId<CommentInDb> | null = await commentCollection.findOne({_id: new ObjectId(id)});
-        // if (!foundComment) return null
+        return await commentCollection.findOne({_id: new ObjectId(id)});
+    }
 
-        // return foundComment
-    },
     async update(id: string, body: CommentInPut): Promise<void> {
-
         await commentCollection.updateOne(
             {_id: new ObjectId(id)},
             {
@@ -29,10 +25,12 @@ export const commentsRepository = {
             }
         );
         return
-    },
+    }
+
     async delete(id: string): Promise<void> {
         await commentCollection.deleteOne({_id: new ObjectId(id)});
     }
+
 
 }
 

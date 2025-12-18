@@ -3,14 +3,14 @@ import {requestCounterCollection} from "../../db/mongo.db";
 import {RequestCounter} from "../../common/types/requestCounter";
 
 
-export const checkRequestCounter = async (req: Request, res: Response, next: NextFunction) => {
+export const checkRequestCounterMiddleware = async (req: Request, res: Response, next: NextFunction) => {
 
     const ip = req.ip!
     const url = req.originalUrl
     const iat = new Date()
     const tenSeconds = new Date(iat.getTime() - 10000)
 
-    console.log(url)
+
     const resultForCollection = (ip: string, url: string, iat: Date): RequestCounter => {
         return {
             ip: ip,

@@ -1,18 +1,12 @@
 import {Router} from 'express';
-import {getPostListHandler} from "./handlers/get-post-list.handler";
 import {idValidation} from "../../core/middlewares/validation/params-id.validation-middleware";
-import {createPostHandler} from "./handlers/create-post.handler";
-import {getPostHandler} from "./handlers/get-post.handler";
-import {updatePostHandler} from "./handlers/update-post.handler";
-import {deletePostHandler} from "./handlers/delete-post.handler";
 import {inputValidationResultMiddleware} from "../../core/middlewares/validation/input-validtion-result.middleware";
 import {superAdminGuardMiddleware} from "../../auth/middlewares/super-admin.guard-middleware";
 import {postInputDtoValidationWithBlogId} from "../validation/postInputDtoValidationWithBlogId";
 import {paginationValidation} from "../../common/validation/paginationValidation";
-import {getCommentsByPostId} from "./handlers/get-commentByPostId.handler";
-import {createCommentHandler} from "./handlers/create-comment.handler";
 import {authorizationMiddleware} from "../../auth/middlewares/authorization.middleware";
 import {commentInputDtoValidation} from "../../comments/validation/commentsInputValidation";
+import {postsController} from "../../composition-root";
 
 
 
@@ -20,10 +14,10 @@ export const postsRouter = Router({});
 
 
 postsRouter
-    .get('/:id/comments', idValidation, paginationValidation, getCommentsByPostId)    //
-    .post('/:id/comments',authorizationMiddleware, idValidation, commentInputDtoValidation, inputValidationResultMiddleware, createCommentHandler) //
-    .get('', paginationValidation, getPostListHandler)  //
-    .post('', superAdminGuardMiddleware, postInputDtoValidationWithBlogId, inputValidationResultMiddleware, createPostHandler)  //
-    .get('/:id', idValidation, inputValidationResultMiddleware, getPostHandler)  //
-    .put('/:id', superAdminGuardMiddleware, idValidation, postInputDtoValidationWithBlogId, inputValidationResultMiddleware, updatePostHandler) //
-    .delete('/:id', superAdminGuardMiddleware, idValidation, inputValidationResultMiddleware, deletePostHandler)     //
+    .get('/:id/comments', idValidation, paginationValidation, postsController.getCommentsByPostId.bind(postsController))
+    .post('/:id/comments',authorizationMiddleware, idValidation, commentInputDtoValidation, inputValidationResultMiddleware, postsController.createComment.bind(postsController))
+    .get('', paginationValidation, postsController.getPostList.bind(postsController))
+    .post('', superAdminGuardMiddleware, postInputDtoValidationWithBlogId, inputValidationResultMiddleware, postsController.createPost.bind(postsController))
+    .get('/:id', idValidation, inputValidationResultMiddleware, postsController.getPost.bind(postsController))
+    .put('/:id', superAdminGuardMiddleware, idValidation, postInputDtoValidationWithBlogId, inputValidationResultMiddleware, postsController.updatePost.bind(postsController))
+    .delete('/:id', superAdminGuardMiddleware, idValidation, inputValidationResultMiddleware, postsController.deletePost.bind(postsController))

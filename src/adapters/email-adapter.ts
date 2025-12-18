@@ -1,9 +1,8 @@
 import nodemailer from "nodemailer";
 
 
-export const emailAdapter = {
-    async sendEmail(email: string, subject: string, code: string): Promise<any> {
-
+export class EmailAdapter {
+     async sendEmail(email: string, subject: string, code: string): Promise<any> {
         let transporter = nodemailer.createTransport({
             service: 'gmail',
             auth: {
@@ -22,4 +21,30 @@ export const emailAdapter = {
         })
 
     }
+
+    async resendEmail(email: string, recoveryCode: string): Promise<any> {
+         let transporter = nodemailer.createTransport({
+             service: 'gmail',
+             auth: {
+                 user: "balbesik077@gmail.com",
+                 pass: "twrkcsuztbecznxb",
+             },
+         });
+         await transporter.sendMail({
+             from: "Zlidnya",
+             to: email,
+             subject: "WoW",
+             html: `<h1>Password recovery</h1>
+             <p>To finish password recovery please follow the link below:
+            <a href='https://somesite.com/password-recovery?recoveryCode=${recoveryCode}'>recovery password</a>
+        </p>`,
+         })
+
+
+    }
+
+
+
+
+
 }

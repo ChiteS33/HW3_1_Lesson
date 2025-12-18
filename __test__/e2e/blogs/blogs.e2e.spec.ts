@@ -3,7 +3,7 @@ import express, {Express} from "express";
 import {setupApp} from "../../../src/setup-app";
 import {runDB, userCollection} from "../../../src/db/mongo.db";
 import {SETTINGS} from "../../../src/core/settings/settings";
-import {emailAdapter} from "../../../src/adapters/email-adapter";
+import {EmailAdapter} from "../../../src/adapters/email-adapter";
 
 
 
@@ -23,7 +23,7 @@ describe('AUTH', () => {
         setupApp(app);
         await runDB(SETTINGS.MONGO_URL);
 
-        jest.spyOn(emailAdapter, 'sendEmail').mockResolvedValue(true)
+        jest.spyOn(EmailAdapter, 'sendEmail').mockResolvedValue(true)
         await request(app).delete('/api/testing/all-data');
     })
 
@@ -202,7 +202,7 @@ describe('USER', () => {
         await runDB(SETTINGS.MONGO_URL);
 
 
-        jest.spyOn(emailAdapter, 'sendEmail').mockResolvedValue(true)
+        jest.spyOn(EmailAdapter, 'sendEmail').mockResolvedValue(true)
         await request(app).delete('/api/testing/all-data');
     })
 

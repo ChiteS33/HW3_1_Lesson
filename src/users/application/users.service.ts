@@ -1,20 +1,29 @@
-import {usersRepository} from "../repositories/users.repository";
 import {UserInDb} from "../types/userInDb";
 import {UserInputDto} from "../types/userInputDto";
 import {WithId} from "mongodb";
-import {hashServices} from "../../common/service/bcrypt.service";
 import {userMapperForRepo} from "../../common/mapper/valuesUserMakerForRepo";
 import {ObjectResult, ResultStatus} from "../../common/types/objectResultTypes";
+import {HashService} from "../../common/service/bcrypt.service";
+import {UsersRepository} from "../repositories/users.repository";
 
 
-export const usersServices = {
+export class UsersService {
+
+    hashService: HashService;
+    usersRepository: UsersRepository;
+
+    constructor(hashService: HashService, usersRepository: UsersRepository) {
+        this.usersRepository = usersRepository;
+        this.hashService = hashService;
+
+    }
 
     async findUserById(id: string): Promise<WithId<UserInDb> | null> {
-        return await usersRepository.findById(id);
-    },
-    async create(inputInfo: UserInputDto): Promise<ObjectResult<null | string>> {
+        return await this.usersRepository.findById(id);
+    }
 
-        const oldUserByEmail = await usersRepository.findByEmail(inputInfo.email);
+    async create(inputInfo: UserInputDto): Promise<ObjectResult<null | string>> {
+        const oldUserByEmail = await this.usersRepository.findByEmail(inputInfo.email);
         if (oldUserByEmail) {
             return {
                 status: ResultStatus.BadRequest,
@@ -26,7 +35,7 @@ export const usersServices = {
                 data: null
             }
         }
-        const oldUserByLogin = await usersRepository.findByName(inputInfo.login);
+        const oldUserByLogin = await this.usersRepository.findByName(inputInfo.login);
         if (oldUserByLogin) {
             return {
                 status: ResultStatus.BadRequest,
@@ -38,19 +47,18 @@ export const usersServices = {
                 data: null
             }
         }
-
-        const hash: string = await hashServices.hashMaker(inputInfo.password)
+        const hash: string = await this.hashService.hashMaker(inputInfo.password)
         const newUser: UserInDb = userMapperForRepo(inputInfo, hash);
-        const createdUser = await usersRepository.create(newUser)
-
-        return{
+        const createdUser = await this.usersRepository.create(newUser)
+        return {
             status: ResultStatus.Created,
             extensions: [],
             data: createdUser
         }
-    },
+    }
+
     async delete(userId: string): Promise<ObjectResult<null>> {
-        const user = await usersServices.findUserById(userId);
+        const user = await this.findUserById(userId);
         if (!user) {
             return {
                 status: ResultStatus.NotFound,
@@ -62,13 +70,16 @@ export const usersServices = {
                 data: null
             }
         }
-
-        await usersRepository.delete(userId);
+        await this.usersRepository.delete(userId);
         return {
             status: ResultStatus.NoContent,
             extensions: [],
             data: null
         }
+    }
+
+    async findUserByEmail(email: string): Promise<WithId<UserInDb> | null> {
+        return await this.usersRepository.findByEmail(email);
     }
 }
 

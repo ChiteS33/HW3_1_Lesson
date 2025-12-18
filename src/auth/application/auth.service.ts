@@ -1,24 +1,48 @@
-import {usersRepository} from "../../users/repositories/users.repository";
-import {hashServices} from "../../common/service/bcrypt.service";
 import {ObjectId, WithId} from "mongodb";
 import {UserInDb} from "../../users/types/userInDb";
-import {emailAdapter} from "../../adapters/email-adapter";
 import {add} from "date-fns";
 import {valuesUserMakerForRepo} from "../../users/routes/mappers/valuesUserMaker";
 import {UserInputDto} from "../../users/types/userInputDto";
 import {ObjectResult, ResultStatus} from "../../common/types/objectResultTypes";
-import {jwtService} from "../../common/service/jwt-service";
-import {jwtDecode} from "jwt-decode";
 import {deviceMapperForRepo} from "../../securityDevices/routes/mappers/deviceMapperForRepo";
 import {Payload} from "../../common/types/payload";
 import {devicesCollection} from "../../db/mongo.db";
-import {devicesServices} from "../../securityDevices/application/securityDevices.service";
+import {UsersRepository} from "../../users/repositories/users.repository";
+import {HashService} from "../../common/service/bcrypt.service";
+import {JwtService} from "../../common/service/jwt-service";
+import {SessionsService} from "../../securityDevices/application/securityDevices.service";
+import {EmailAdapter} from "../../adapters/email-adapter";
+import {RecoveryPassInDb} from "../../common/types/recoveryPassInDb";
+import {AuthRepository} from "../repositories/authRepository";
+import {recoveryMapper} from "../../common/mapper/recoveryPassMapper";
+import {UsersService} from "../../users/application/users.service";
 
 
-export const authServices = {
+export class AuthService {
+
+    usersRepository: UsersRepository;
+    hashService: HashService;
+    emailAdapter: EmailAdapter;
+    jwtService: JwtService;
+    sessionsService: SessionsService;
+    authRepository: AuthRepository;
+    userService: UsersService
+
+
+    constructor(usersRepository: UsersRepository, hashService: HashService, emailAdapter: EmailAdapter, jwtService: JwtService, sessionsService: SessionsService, authRepository: AuthRepository, userService: UsersService) {
+        this.usersRepository = usersRepository;
+        this.hashService = hashService;
+        this.emailAdapter = emailAdapter;
+        this.jwtService = jwtService;
+        this.sessionsService = sessionsService;
+        this.authRepository = authRepository;
+        this.userService = userService;
+
+    }
+
 
     async checking(logOrEmail: string, pass: string): Promise<ObjectResult<WithId<UserInDb> | null>> {
-        const user = await usersRepository.findByLoginOrEmail(logOrEmail)
+        const user = await this.usersRepository.findByLoginOrEmail(logOrEmail)
         if (!user) return {
             status: ResultStatus.Unauthorized,
             errorMessage: "loginOrEmail not founded",
@@ -28,7 +52,7 @@ export const authServices = {
             }],
             data: null
         }
-        const isValid = await hashServices.compareHash(pass, user.password)
+        const isValid = await this.hashService.compareHash(pass, user.password)
         if (!isValid) return {
             status: ResultStatus.Unauthorized,
             errorMessage: "password is not valid",
@@ -38,18 +62,16 @@ export const authServices = {
             }],
             data: null
         }
-
-
         return {
             status: ResultStatus.Success,
             extensions: [],
             data: user
         }
-    },
-    async createUser(body: UserInputDto): Promise<ObjectResult<null>> {
+    }
 
-        const passwordHash: string = await hashServices.hashMaker(body.password)
-        const user: WithId<UserInDb> | null = await usersRepository.findByLoginOrEmail(body.login)
+    async createUser(body: UserInputDto): Promise<ObjectResult<null>> {
+        const passwordHash: string = await this.hashService.hashMaker(body.password)
+        const user: WithId<UserInDb> | null = await this.usersRepository.findByLoginOrEmail(body.login)
         if (user) return {
             status: ResultStatus.BadRequest,
             errorMessage: "login already created",
@@ -59,7 +81,7 @@ export const authServices = {
             }],
             data: null
         }
-        const emailUser = await usersRepository.findByLoginOrEmail(body.email)
+        const emailUser = await this.usersRepository.findByLoginOrEmail(body.email)
         if (emailUser) return {
             status: ResultStatus.BadRequest,
             errorMessage: "email already created",
@@ -70,19 +92,17 @@ export const authServices = {
             data: null
         }
         const newUser: UserInDb = valuesUserMakerForRepo(body, passwordHash)
-        await usersRepository.create(newUser)
-        emailAdapter.sendEmail(newUser.email, "ChiteS", newUser.emailConfirmation.confirmationCode)
-
+        await this.usersRepository.create(newUser)
+        await this.emailAdapter.sendEmail(newUser.email, "ChiteS", newUser.emailConfirmation.confirmationCode)
         return {
             status: ResultStatus.NoContent,
             extensions: [],
             data: null
         }
+    }
 
-    },
     async confirmEmail(code: string): Promise<ObjectResult<null>> {
-        const user: WithId<UserInDb> | null = await usersRepository.findByCode(code)
-
+        const user: WithId<UserInDb> | null = await this.usersRepository.findByCode(code)
         if (!user) return {
             status: ResultStatus.BadRequest,
             errorMessage: "Bad request",
@@ -112,37 +132,34 @@ export const authServices = {
         }
         if (user.emailConfirmation.expirationDate < new Date()) return {
             status: ResultStatus.BadRequest,
-            errorMessage: "Bad Request",
+            errorMessage: "Date is dead",
             extensions: [{
                 field: "code",
                 message: "Date is dead",
             }],
             data: null
         }
-
-
-        await usersRepository.updateConfirmation(user._id)
+        await this.usersRepository.updateConfirmation(user._id)
         return {
             status: ResultStatus.NoContent,
             extensions: [],
             data: null
         }
-    },
-    async resendingEmail(email: string): Promise<ObjectResult<null>> {
+    }
 
-        const foundEmail = await usersRepository.findByEmail(email)
-        if (!foundEmail) return {
+    async resendingEmail(email: string): Promise<ObjectResult<null>> {
+        const foundUser = await this.usersRepository.findByEmail(email)
+        if (!foundUser) return {
             status: ResultStatus.BadRequest,
-            errorMessage: "email is not founded",
+            errorMessage: "user is not founded",
             extensions: [{
                 field: "email",
-                message: "email is not founded",
+                message: "user is not founded",
             }],
             data: null
         }
-
-        const userId = foundEmail._id.toString()
-        if (foundEmail.emailConfirmation.isConfirmed) return {
+        const userId = foundUser._id.toString()
+        if (foundUser.emailConfirmation.isConfirmed) return {
             status: ResultStatus.BadRequest,
             errorMessage: "email is already confirmed",
             extensions: [{
@@ -151,60 +168,52 @@ export const authServices = {
             }],
             data: null
         }
-
         const newConfirmationCode = crypto.randomUUID()
         const newExpirationDate = add(new Date(), {hours: 1})
-
-        await usersRepository.updateConfirmationCode(newConfirmationCode, newExpirationDate, userId)
-        emailAdapter.sendEmail(foundEmail.email, "ChiteS", newConfirmationCode)
+        await this.usersRepository.updateConfirmationCode(newConfirmationCode, newExpirationDate, userId)
+        await this.emailAdapter.sendEmail(foundUser.email, "ChiteS", newConfirmationCode)
         return {
             status: ResultStatus.NoContent,
             extensions: [],
             data: null
         }
 
-    },
-    async login(loginOrEmail: string, password: string, deviceName: any, ip: any): Promise<ObjectResult<{
+    }
+
+    async login(loginOrEmail: string, password: string, deviceName: string, ip: string): Promise<ObjectResult<{
         token: string,
         refreshToken: string
     } | null>> {
-        const user = await authServices.checking(loginOrEmail, password)
+        const user = await this.checking(loginOrEmail, password)
         if (user.status !== ResultStatus.Success) return {
             status: user.status,
             extensions: user.extensions,
             data: null
         }
         const userId = user.data!._id.toString()
-
-        const token = await jwtService.createJWT(userId);
-        const refreshToken = await jwtService.createRefreshToken(userId)
-        const payload: Payload = jwtDecode(refreshToken)                                       // перенести в сервис
-
-        await devicesServices.createSession(deviceMapperForRepo(payload, deviceName, ip))
-
-
+        const token = await this.jwtService.createJWT(userId);
+        const refreshToken = await this.jwtService.createRefreshToken(userId)
+        const payload: Payload = await this.jwtService.decodeJWT(refreshToken)
+        await this.sessionsService.createSession(deviceMapperForRepo(payload, deviceName, ip))
         return {
             status: ResultStatus.Success,
             extensions: [],
             data: {token, refreshToken}
         }
-    },
-    async refreshPairTokens(refreshToken: string): Promise<any> {
+    }
 
-
-        const payloadRefreshToken: Payload = jwtDecode(refreshToken)
+    async refreshPairTokens(refreshToken: string): Promise<ObjectResult<{
+        newAccessToken: string,
+        newRefreshToken: string
+    }>> {
+        const payloadRefreshToken: Payload = await this.jwtService.decodeJWT(refreshToken)
         const userId = payloadRefreshToken.userId
         const deviceId = payloadRefreshToken.deviceId
-
-        const newAccessToken = await jwtService.createJWT(userId)
-        const newRefreshToken = await jwtService.createRefreshToken(userId, deviceId)
-
-        const newPayload: Payload = jwtDecode(newRefreshToken)
+        const newAccessToken = await this.jwtService.createJWT(userId)
+        const newRefreshToken = await this.jwtService.createRefreshToken(userId, deviceId)
+        const newPayload: Payload = await this.jwtService.decodeJWT(newRefreshToken)
         const newIat = newPayload.iat
         const newExp = newPayload.exp
-
-
-
         await devicesCollection.updateOne({
                 userId: new ObjectId(userId),
                 deviceId: new ObjectId(deviceId)
@@ -215,19 +224,15 @@ export const authServices = {
                     exp: new Date(newExp * 1000)
                 }
             })
-
         return {
             status: ResultStatus.Success,
             extensions: [],
             data: {newAccessToken, newRefreshToken}
         }
-    },
+    }
 
-
-    async logout(refreshToken: string): Promise<any> {
-
-        const foundSession = await devicesServices.findByUserIdAndDeviceId(refreshToken)
-
+    async logout(refreshToken: string): Promise<ObjectResult<null>> {
+        const foundSession = await this.sessionsService.findByUserIdAndDeviceId(refreshToken)
         if (!foundSession.data) {
             return {
                 status: ResultStatus.NotFound,
@@ -239,17 +244,76 @@ export const authServices = {
                 data: null
             }
         }
-
         await devicesCollection.deleteOne({_id: new ObjectId(foundSession.data._id)})
         return {
             status: ResultStatus.NoContent,
             extensions: [],
             data: null
         }
-
-
     }
+
+    async passRecovery(email: string): Promise<ObjectResult<null>> {
+
+        const foundEmail: WithId<UserInDb> | null = await this.usersRepository.findByEmail(email)
+        if (!foundEmail) return {
+            status: ResultStatus.NotFound,
+            errorMessage: "email is not found",
+            extensions: [{
+                field: "email",
+                message: "email is not found",
+            }],
+            data: null
+        }
+        const recoveryCode = crypto.randomUUID()
+        const result: RecoveryPassInDb = recoveryMapper(email, recoveryCode)
+        await this.authRepository.pushInDb(result)                    // пушим данные в Коллекцию
+        await this.emailAdapter.resendEmail(email, recoveryCode)
+        return {
+            status: ResultStatus.Success,
+            extensions: [],
+            data: null
+        }
+    }
+
+    async confirmRecoveryPass(newPassword: string, recoveryCode: string): Promise<ObjectResult<any>> {
+        const foundEmail = await this.authRepository.findByRecoveryCode(recoveryCode)
+        if (!foundEmail) {
+            return {
+                status: ResultStatus.NotFound,
+                errorMessage: "email is not found",
+                extensions: [{
+                    field: "recoveryCode",
+                    message: "recoveryCode is wrong or expired"
+                }],
+                data: null
+            }
+        }
+        const foundUser: WithId<UserInDb> | null = await this.userService.findUserByEmail(foundEmail)
+        if (!foundUser) {
+            return {
+                status: ResultStatus.NotFound,
+                errorMessage: "user not found",
+                extensions: [{
+                    field: "recoveryCode",
+                    message: "user not found"
+                }],
+                data: null
+            }
+        }
+        const newPassHash = await this.hashService.hashMaker(newPassword)
+        await this.authRepository.changePassword(foundUser, newPassHash)
+        await this.authRepository.deleteRecoveryCode(foundEmail)
+        return {
+            status: ResultStatus.NoContent,
+            extensions: [],
+            data: null
+        }
+    }
+
+
 }
+
+
 
 
 

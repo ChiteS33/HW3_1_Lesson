@@ -1,17 +1,29 @@
-import {commentsRepository} from "../repositories/comments.repository";
 import {CommentInPut} from "../types/commentInPut";
 import {UserInDb} from "../../users/types/userInDb";
 import {WithId} from "mongodb";
 import {commentsValueMaker} from "../routers/mappers/commentsMapperForRepo";
 import {CommentInDb} from "../types/commentInDb";
 import {ObjectResult, ResultStatus} from "../../common/types/objectResultTypes";
-import {postsServices} from "../../posts/application/posts.service";
+import {PostsService} from "../../posts/application/posts.service";
+import {CommentsRepository} from "../repositories/comments.repository";
 
 
-export const commentsServices = {
+
+
+export class CommentsService {
+
+postsService: PostsService;
+commentsRepository: CommentsRepository;
+
+constructor(postsService: PostsService, commentsRepository: CommentsRepository,) {
+    this.postsService = postsService;
+    this.commentsRepository = commentsRepository;
+
+}
+
 
     async findById(id: string): Promise<ObjectResult<WithId<CommentInDb> | null>> {
-        const result = await commentsRepository.findById(id);
+        const result = await this.commentsRepository.findById(id);
         if (!result) {
             return {
                 status: ResultStatus.NotFound,
@@ -28,10 +40,10 @@ export const commentsServices = {
             extensions: [],
             data: result
         }
-    },
-    async create(user: WithId<UserInDb>, body: CommentInPut, postId: string): Promise<ObjectResult<string | null>> {
-        const post = await postsServices.findById(postId);
+    }
 
+    async create(user: WithId<UserInDb>, body: CommentInPut, postId: string): Promise<ObjectResult<string | null>> {
+        const post = await this.postsService.findById(postId);
         if (!post.data) {
             return {
                 status: ResultStatus.NotFound,
@@ -43,18 +55,17 @@ export const commentsServices = {
                 data: null
             }
         }
-
         const newComment: CommentInDb = commentsValueMaker(postId, body, user)
-        const createdCommentId = await commentsRepository.create(newComment)
+        const createdCommentId = await this.commentsRepository.create(newComment)
         return {
             status: ResultStatus.Created,
             extensions: [],
             data: createdCommentId
         }
+    }
 
-    },
     async update(id: string, body: CommentInPut, userLogin: string): Promise<ObjectResult<null>> {
-        const foundComment = await commentsServices.findById(id)
+        const foundComment = await this.findById(id)
         if (!foundComment.data) {
             return {
                 status: ResultStatus.NotFound,
@@ -76,17 +87,16 @@ export const commentsServices = {
                 }],
                 data: null
             }
-
-        await commentsRepository.update(id, body);
+        await this.commentsRepository.update(id, body);
         return {
             status: ResultStatus.NoContent,
             extensions: [],
             data: null
         }
-    },
-    async delete(id: string, userLogin: string): Promise<ObjectResult<void | null>> {
-        const check: ObjectResult<WithId<CommentInDb> | null> = await commentsServices.findById(id);
+    }
 
+    async delete(id: string, userLogin: string): Promise<ObjectResult<void | null>> {
+        const check: ObjectResult<WithId<CommentInDb> | null> = await this.findById(id);
         if (check.status !== ResultStatus.Success) {
             return {
                 status: ResultStatus.NotFound,
@@ -109,12 +119,13 @@ export const commentsServices = {
                 data: null
             }
         }
-
-        await commentsRepository.delete(id);
+        await this.commentsRepository.delete(id);
         return {
             status: ResultStatus.NoContent,
             extensions: [],
             data: null
         }
     }
+
+
 }

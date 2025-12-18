@@ -1,17 +1,25 @@
 import {ObjectResult, ResultStatus} from "../../common/types/objectResultTypes";
-import {jwtDecode} from "jwt-decode";
-import {devicesRepository} from "../repositories/securityDevices.repository";
 import {Payload} from "../../common/types/payload";
 import {devicesCollection} from "../../db/mongo.db";
 import {DeviceInDb} from "../types/deviceInDb";
 import {ObjectId, WithId} from "mongodb";
+import {SessionsRepository} from "../repositories/securityDevices.repository";
+import {JwtService} from "../../common/service/jwt-service";
 
 
-export const devicesServices = {
+export class SessionsService {
+
+    sessionsRepository: SessionsRepository;
+    jwtService: JwtService;
+
+    constructor(sessionsRepository: SessionsRepository, jwtService: JwtService) {
+        this.sessionsRepository = sessionsRepository;
+        this.jwtService = jwtService;
+    }
+
 
     async findByUserIdAndDeviceId(refreshToken: any): Promise<ObjectResult<WithId<DeviceInDb> | null>> {
-
-        const payloadRefreshToken: Payload = jwtDecode(refreshToken)
+        const payloadRefreshToken: Payload = await this.jwtService.decodeJWT(refreshToken)
         const userId = new ObjectId(payloadRefreshToken.userId)
         const deviceId = new ObjectId(payloadRefreshToken.deviceId)
         const foundSession: WithId<DeviceInDb> | null = await devicesCollection.findOne({userId, deviceId})
@@ -31,33 +39,30 @@ export const devicesServices = {
             extensions: [],
             data: foundSession
         }
+    }
 
-    },
     async createSession(info: any): Promise<ObjectResult<string>> {
-        const sessionId = await devicesRepository.createSession(info)
+        const sessionId = await this.sessionsRepository.createSession(info)
         return {
             status: ResultStatus.Created,
             extensions: [],
             data: sessionId
         }
-    },
-    async deleteAllExcludeCurrentUser(refreshToken: any): Promise<ObjectResult<null>> {
+    }
 
-        const payloadRefreshToken: Payload = jwtDecode(refreshToken)
+    async deleteAllExcludeCurrentUser(refreshToken: any): Promise<ObjectResult<null>> {
+        const payloadRefreshToken: Payload = await this.jwtService.decodeJWT(refreshToken)
         const deviceId = payloadRefreshToken.deviceId
         const userId: string = payloadRefreshToken.userId
-
-        await devicesRepository.deleteAlmostAll(userId, deviceId)
-
+        await this.sessionsRepository.deleteAlmostAll(userId, deviceId)
         return {
             status: ResultStatus.NoContent,
             extensions: [],
             data: null
         }
-    },
+    }
 
     async findSessionById(deviceId: any): Promise<ObjectResult<WithId<DeviceInDb> | null>> {
-
         const result = await devicesCollection.findOne({deviceId: new ObjectId(deviceId)})
         if (!result) {
             return {
@@ -75,15 +80,12 @@ export const devicesServices = {
             extensions: [],
             data: result
         }
-    },
+    }
 
     async deleteByDeviceId(refreshToken: any, deviceId: string): Promise<ObjectResult<any>> {
-
-        const payloadRefreshToken: Payload = jwtDecode(refreshToken)
+        const payloadRefreshToken: Payload = await this.jwtService.decodeJWT(refreshToken)
         const userId: string = payloadRefreshToken.userId
-
-        const foundSessionByUserIdFromToken: ObjectResult<WithId<DeviceInDb> | null> = await devicesServices.findSessionById(deviceId)
-
+        const foundSessionByUserIdFromToken: ObjectResult<WithId<DeviceInDb> | null> = await this.findSessionById(deviceId)
         if (!foundSessionByUserIdFromToken.data) {
             return {
                 status: ResultStatus.NotFound,
@@ -93,9 +95,6 @@ export const devicesServices = {
             }
         }
         const userIdFromSession = foundSessionByUserIdFromToken.data.userId
-
-
-
         if (userIdFromSession.toString() !== userId) {
             return {
                 status: ResultStatus.Forbidden,
@@ -107,13 +106,15 @@ export const devicesServices = {
                 data: null
             }
         }
-
-        await devicesRepository.deleteById(deviceId)
-
+        await this.sessionsRepository.deleteById(deviceId)
         return {
             status: ResultStatus.NoContent,
             extensions: [],
             data: null
         }
     }
+
+
 }
+
+

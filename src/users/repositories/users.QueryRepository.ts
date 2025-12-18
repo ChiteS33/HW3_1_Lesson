@@ -16,45 +16,36 @@ import {
 import {ObjectResult, ResultStatus} from "../../common/types/objectResultTypes";
 
 
-export const usersQueryRepository = {
+export class UsersQueryRepository {
 
     async findAll(query: InPutPaginationWithSearchLoginTermAndSearchEMailTerm): Promise<ObjectResult<FinalWithPagination<UserOutPut>>> {
-
         const pagination: PaginationWithSearchLoginTermAndSearchEMailTermForRepo = valuesMakerWithSearchLoginAndEmail(query)
-
         const skip = (pagination.pageNumber - 1) * pagination.pageSize;
         const limit = pagination.pageSize;
         const sort = {[pagination.sortBy]: pagination.sortDirection}
-
         const search = {
             $or: [
                 {login: {$regex: pagination.searchLoginTerm, $options: "i"}},
                 {email: {$regex: pagination.searchEmailTerm, $options: "i"}}
             ]
         }
-
         const users: WithId<UserInDb>[] = await userCollection.find(search).skip(skip).limit(limit).sort(sort).toArray();
-
         const totalCount = await userCollection.countDocuments(search);
-
         const params: OutPutPagination = {
             pagesCount: Math.ceil(totalCount / pagination.pageSize),
             page: pagination.pageNumber,
             pageSize: pagination.pageSize,
             totalCount: totalCount,
         }
-
         const userForFrontend: UserOutPut[] = users.map(userMapper)
         return {
             status: ResultStatus.Success,
             extensions: [],
             data: finalUserMapper(userForFrontend, params)
         }
+    }
 
-
-    },
     async findById(userId: string): Promise<ObjectResult<UserOutPut | null>> {
-
         const user: WithId<UserInDb> | null = await userCollection.findOne({_id: new ObjectId(userId)})
         if (!user) {
             return {
@@ -67,12 +58,12 @@ export const usersQueryRepository = {
                 data: null
             }
         }
-
         return {
             status: ResultStatus.Success,
             extensions: [],
             data: userMapper(user)
         }
+    }
 
-    },
+
 }

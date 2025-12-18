@@ -7,30 +7,25 @@ import {DeviceOutPut} from "../types/deviceOutPut";
 
 
 
-export const devicesQueryRepository = {
+export class SessionsQueryRepository {
 
 
-    async findAllDevicesByUserId(userId: any,): Promise<ObjectResult<DeviceOutPut[] | null>> {
-
+      async findAllDevicesByUserId(userId: any,): Promise<ObjectResult<DeviceOutPut[] | null>> {
         const currentDate = new Date();
-
         const result = await devicesCollection.find({
             userId: new ObjectId(userId),
             exp: {$gt: currentDate}
         }).toArray();
-
         const resultForFront: DeviceOutPut[] = result.map(deviceFinalMake)
-
-
         return {
             status: ResultStatus.Success,
             extensions: [],
             data: resultForFront
         }
     }
+
+
 }
 
-
-// Надо найти все device, если exp > нынешней даты, одного конкретного Юзера
 
 
