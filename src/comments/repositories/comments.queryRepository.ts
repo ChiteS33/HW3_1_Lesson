@@ -1,7 +1,5 @@
 import {ObjectId, WithId} from "mongodb";
-import {commentCollection} from "../../db/mongo.db";
-import {CommentInDb} from "../types/commentInDb";
-import {commentMapp} from "../routers/mappers/commentsFinalMapper";
+import {commentMapper} from "../routers/mappers/commentsFinalMapper";
 import {CommentOutPut} from "../types/commentOutPut";
 import {valuesPaginationMaker} from "../../common/mapper/valuesPaginationMaker";
 import {PaginationForRepo} from "../../common/types/paginationForRepo";
@@ -11,19 +9,19 @@ import {FinalWithPagination} from "../../common/types/finalWithPagination";
 import {InPutPagination} from "../../common/types/inPutPagination";
 import {ObjectResult, ResultStatus} from "../../common/types/objectResultTypes";
 import {PostsService} from "../../posts/application/posts.service";
+import {inject} from "inversify";
+import {CommentDocument, CommentModel} from "../routers/comments.entity";
 
 
 export class CommentsQueryRepository {
 
-    postsService: PostsService;
+    constructor(@inject(PostsService) public postsService: PostsService) {
 
-    constructor(postsService: PostsService) {
-        this.postsService = postsService;
     }
 
 
     async findById(id: string): Promise<ObjectResult<CommentOutPut | null>> {
-        const foundComment: WithId<CommentInDb> | null = await commentCollection.findOne({_id: new ObjectId(id)})
+        const foundComment: CommentDocument | null = await CommentModel.findOne({_id: new ObjectId(id)})
         if (!foundComment) return {
             status: ResultStatus.NotFound,
             errorMessage: "Could not find comment",
@@ -36,7 +34,7 @@ export class CommentsQueryRepository {
         return {
             status: ResultStatus.Success,
             extensions: [],
-            data: commentMapp(foundComment)
+            data: commentMapper(foundComment)
         }
     }
 
@@ -58,7 +56,7 @@ export class CommentsQueryRepository {
         const limit = pagination.pageSize
         const sort = {[pagination.sortBy]: pagination.sortDirection}
         const search = {postId: new ObjectId(postId)}
-        const comments: WithId<CommentInDb>[] = await commentCollection.find(search).skip(skip).limit(limit).sort(sort).toArray();
+        const comments: CommentDocument[] = await CommentModel.find(search).skip(skip).limit(limit).sort(sort);
         if (!comments) {
             return {
                 status: ResultStatus.NotFound,
@@ -70,14 +68,14 @@ export class CommentsQueryRepository {
                 data: null
             }
         }
-        const totalCount = await commentCollection.countDocuments(search)
+        const totalCount = await CommentModel.countDocuments(search)
         const params: OutPutPagination = {
             pagesCount: Math.ceil(totalCount / limit),
             page: pagination.pageNumber,
             pageSize: limit,
             totalCount: totalCount,
         }
-        const commentsForFront: CommentOutPut[] = comments.map(commentMapp)
+        const commentsForFront: CommentOutPut[] = comments.map(commentMapper)
         return {
             status: ResultStatus.Success,
             extensions: [],

@@ -1,23 +1,22 @@
 import {Request, Response} from 'express';
-import {WithId} from "mongodb";
-import {UserInDb} from "../../users/types/userInDb";
 import {resultCodeToHttpException} from "../../common/mapper/resultCodeToHttp";
 import {ResultStatus} from "../../common/types/objectResultTypes";
 import {UserInputDto} from "../../users/types/userInputDto";
 import {AuthService} from "./auth.service";
+import {inject, injectable} from "inversify";
+import "reflect-metadata";
 
 
+@injectable()
 export class AuthController {
 
-    authService: AuthService;
 
-    constructor(authService: AuthService) {
-        this.authService = authService;
+    constructor(@inject(AuthService) public authService: AuthService) {
     }
 
 
     async getInfoAboutUser(req: Request, res: Response) {
-        const user: WithId<UserInDb> = req.user!
+        const user = req.user!
         const data = {
             email: user.email,
             login: user.login,
@@ -103,7 +102,7 @@ export class AuthController {
         const newPassword: string = req.body.newPassword;
         const result = await this.authService.confirmRecoveryPass(newPassword, recoveryCode);
         if (result.status !== ResultStatus.NoContent) {
-           return  res.status(resultCodeToHttpException(ResultStatus.BadRequest)).send({errorsMessages: result.extensions})
+            return res.status(resultCodeToHttpException(ResultStatus.BadRequest)).send({errorsMessages: result.extensions})
         }
         return res.sendStatus(resultCodeToHttpException(result.status))
     }

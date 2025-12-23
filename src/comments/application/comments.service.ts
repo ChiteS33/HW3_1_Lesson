@@ -1,29 +1,23 @@
 import {CommentInPut} from "../types/commentInPut";
-import {UserInDb} from "../../users/types/userInDb";
-import {WithId} from "mongodb";
-import {commentsValueMaker} from "../routers/mappers/commentsMapperForRepo";
-import {CommentInDb} from "../types/commentInDb";
 import {ObjectResult, ResultStatus} from "../../common/types/objectResultTypes";
 import {PostsService} from "../../posts/application/posts.service";
 import {CommentsRepository} from "../repositories/comments.repository";
-
-
+import {inject} from "inversify";
+import {CommentDocument, CommentModel} from "../routers/comments.entity";
+import {PostDocument} from "../../posts/routes/posts.entity";
+import {ObjectId} from "mongodb";
 
 
 export class CommentsService {
 
-postsService: PostsService;
-commentsRepository: CommentsRepository;
 
-constructor(postsService: PostsService, commentsRepository: CommentsRepository,) {
-    this.postsService = postsService;
-    this.commentsRepository = commentsRepository;
-
-}
+    constructor(@inject(PostsService) public postsService: PostsService,
+                @inject(CommentsRepository) public commentsRepository: CommentsRepository,) {
+    }
 
 
-    async findById(id: string): Promise<ObjectResult<WithId<CommentInDb> | null>> {
-        const result = await this.commentsRepository.findById(id);
+    async findCommentById(id: string): Promise<ObjectResult<CommentDocument | null>> {
+        const result: CommentDocument | null = await this.commentsRepository.findById(id);
         if (!result) {
             return {
                 status: ResultStatus.NotFound,
@@ -42,9 +36,9 @@ constructor(postsService: PostsService, commentsRepository: CommentsRepository,)
         }
     }
 
-    async create(user: WithId<UserInDb>, body: CommentInPut, postId: string): Promise<ObjectResult<string | null>> {
-        const post = await this.postsService.findById(postId);
-        if (!post.data) {
+    async createComment(userLogin: string, userId: string, body: CommentInPut, postId: string): Promise<ObjectResult<string | null>> {
+        const foundPost: ObjectResult<PostDocument | null> = await this.postsService.findById(postId);
+        if (!foundPost.data) {
             return {
                 status: ResultStatus.NotFound,
                 errorMessage: "Post is not found",
@@ -55,8 +49,15 @@ constructor(postsService: PostsService, commentsRepository: CommentsRepository,)
                 data: null
             }
         }
-        const newComment: CommentInDb = commentsValueMaker(postId, body, user)
-        const createdCommentId = await this.commentsRepository.create(newComment)
+
+        const newComment = new CommentModel()
+        newComment.content = body.content
+        newComment.postId = new ObjectId(postId);
+        newComment.commentatorInfo.userId = new ObjectId(userId);
+        newComment.commentatorInfo.userLogin = userLogin;
+        newComment.createdAt = new Date();
+        const createdCommentId = await this.commentsRepository.save(newComment);
+
         return {
             status: ResultStatus.Created,
             extensions: [],
@@ -64,8 +65,8 @@ constructor(postsService: PostsService, commentsRepository: CommentsRepository,)
         }
     }
 
-    async update(id: string, body: CommentInPut, userLogin: string): Promise<ObjectResult<null>> {
-        const foundComment = await this.findById(id)
+    async updateComment(id: string, body: CommentInPut, userLogin: string): Promise<ObjectResult<null>> {
+        const foundComment: ObjectResult<CommentDocument | null> = await this.findCommentById(id)
         if (!foundComment.data) {
             return {
                 status: ResultStatus.NotFound,
@@ -87,7 +88,11 @@ constructor(postsService: PostsService, commentsRepository: CommentsRepository,)
                 }],
                 data: null
             }
-        await this.commentsRepository.update(id, body);
+
+        const updatedComment = new CommentModel(foundComment)
+        updatedComment.content = body.content;
+        await this.commentsRepository.save(updatedComment)
+
         return {
             status: ResultStatus.NoContent,
             extensions: [],
@@ -95,9 +100,9 @@ constructor(postsService: PostsService, commentsRepository: CommentsRepository,)
         }
     }
 
-    async delete(id: string, userLogin: string): Promise<ObjectResult<void | null>> {
-        const check: ObjectResult<WithId<CommentInDb> | null> = await this.findById(id);
-        if (check.status !== ResultStatus.Success) {
+    async deleteComment(id: string, userLogin: string): Promise<ObjectResult<void | null>> {
+        const foundComment: ObjectResult<CommentDocument | null> = await this.findCommentById(id);
+        if (foundComment.status !== ResultStatus.Success) {
             return {
                 status: ResultStatus.NotFound,
                 errorMessage: "Comment not found",
@@ -108,7 +113,7 @@ constructor(postsService: PostsService, commentsRepository: CommentsRepository,)
                 data: null
             }
         }
-        if (userLogin !== check.data!.commentatorInfo.userLogin) {
+        if (userLogin !== foundComment.data!.commentatorInfo.userLogin) {
             return {
                 status: ResultStatus.Forbidden,
                 errorMessage: "Login is Forbidden",

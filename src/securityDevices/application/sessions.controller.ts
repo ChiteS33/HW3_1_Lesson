@@ -4,22 +4,18 @@ import {ObjectResult, ResultStatus} from "../../common/types/objectResultTypes";
 import {DeviceOutPut} from "../types/deviceOutPut";
 import {resultCodeToHttpException} from "../../common/mapper/resultCodeToHttp";
 import {SessionsQueryRepository} from "../repositories/sessionsQueryRepository";
-import {SessionsService} from "./securityDevices.service";
 import {JwtService} from "../../common/service/jwt-service";
+import {inject} from "inversify";
+import {SessionsService} from "./sessions.service";
 
 
 export class SessionsController {
 
-    sessionsQueryRepository: SessionsQueryRepository;
-    sessionsService: SessionsService;
-    jwtService: JwtService;
 
-    constructor(sessionsQueryRepository: SessionsQueryRepository, jwtService: JwtService, sessionsService: SessionsService) {
-        this.sessionsService = sessionsService;
-        this.sessionsQueryRepository = sessionsQueryRepository;
-        this.jwtService = jwtService;
+    constructor(@inject(SessionsQueryRepository) public sessionsQueryRepository: SessionsQueryRepository,
+                @inject(JwtService) public jwtService: JwtService,
+                @inject(SessionsService) public sessionsService: SessionsService) {
     }
-
 
 
     async getAllDevices(req: Request, res: Response) {

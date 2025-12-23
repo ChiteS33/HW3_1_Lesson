@@ -1,28 +1,23 @@
-import {PostInDb} from "../types/postInDb";
 import {PostInputDto} from "../types/post-input.dto";
 import {PostInputDtoForBlog} from "../types/postInBlog";
-import {postMaker} from "../routes/mappers/postMaker";
 import {ObjectResult, ResultStatus} from "../../common/types/objectResultTypes";
-import {WithId} from "mongodb";
+import {ObjectId, WithId} from "mongodb";
 import {BlogsService} from "../../blogs/application/blogs.service";
 import {PostsRepository} from "../repositories/postsRepository";
+import {inject} from "inversify";
+import {PostDocument, PostInDb, PostModel} from "../routes/posts.entity";
 
 
 
 export class PostsService {
 
-    blogsService: BlogsService;
-    postsRepository: PostsRepository;
-
-    constructor(blogsService: BlogsService, postsRepository: PostsRepository) {
-        this.blogsService = blogsService;
-        this.postsRepository = postsRepository;
-
+    constructor(@inject(BlogsService) public blogsService: BlogsService,
+                @inject(PostsRepository) public postsRepository: PostsRepository) {
     }
 
 
-    async findById(id: string): Promise<ObjectResult<WithId<PostInDb> | null>> {
-        const result = await this.postsRepository.findById(id);
+    async findById(id: string): Promise<ObjectResult<WithId<PostDocument> | null>> {
+        const result: PostDocument | null = await this.postsRepository.findById(id);
         if (!result) {
             return {
                 status: ResultStatus.NotFound,
@@ -54,7 +49,15 @@ export class PostsService {
                 data: null
             }
         }
-        const newPostId = await this.postsRepository.create(postMaker(blog.data!, body))
+        const newPost = new PostModel()
+        newPost.title = body.title
+        newPost.shortDescription = body.shortDescription
+        newPost.content = body.content
+        newPost.blogId = new ObjectId(blog.data._id)
+        newPost.blogName = blog.data.name
+        newPost.createdAt = new Date()
+
+        const newPostId = await this.postsRepository.save(newPost)
         return {
             status: ResultStatus.Created,
             extensions: [],
@@ -87,11 +90,17 @@ export class PostsService {
                 data: null
             }
         }
-        const result = await this.postsRepository.update(postId, body);
+        const updatedPost = new PostModel(post)
+        updatedPost.title = body.title
+        updatedPost.shortDescription = body.shortDescription
+        updatedPost.content = body.content
+        updatedPost.blogId = new ObjectId(blog.data._id)
+        const updatedPostId = await this.postsRepository.save(updatedPost)
+
         return {
             status: ResultStatus.NoContent,
             extensions: [],
-            data: result
+            data: updatedPostId
         }
     }
 
@@ -129,12 +138,19 @@ export class PostsService {
                 data: null
             }
         }
-        const postForRepo: PostInDb = postMaker(blog.data!, inputInfo);
-        const post = await this.postsRepository.create(postForRepo)
+        const newPost = new PostModel()
+        newPost.title = inputInfo.title
+        newPost.shortDescription = inputInfo.shortDescription
+        newPost.content = inputInfo.content
+        newPost.blogId = new ObjectId(blog.data._id)
+        newPost.blogName = blog.data.name
+        newPost.createdAt = new Date()
+
+        const newPostId = await this.postsRepository.save(newPost)
         return {
             status: ResultStatus.Created,
             extensions: [],
-            data: post
+            data: newPostId
         }
     }
 

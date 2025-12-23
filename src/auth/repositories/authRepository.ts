@@ -1,31 +1,29 @@
-import {recoveryPassCollection, userCollection} from "../../db/mongo.db";
-import {RecoveryPassInDb} from "../../common/types/recoveryPassInDb";
-import {UserInDb} from "../../users/types/userInDb";
-import {WithId} from "mongodb";
+import {ObjectId} from "mongodb";
+import {injectable} from "inversify";
+import {RecoveryPassDocument, RecoveryPassModel} from "../routers/auth.entity";
 
 
-
+@injectable()
 export class AuthRepository {
 
 
-    async pushInDb(info: RecoveryPassInDb): Promise<string> {
-        const result = await recoveryPassCollection.insertOne((info))
-        return result.insertedId.toString()
+    async save(recoveryPass: RecoveryPassDocument): Promise<string> {
+        const savedRecoveryPass = await recoveryPass.save();
+        return savedRecoveryPass._id.toString();
     }
 
     async findByRecoveryCode(recoveryCode: string): Promise<string | null> {
-        const foundEmail = await recoveryPassCollection.findOne({recoveryCode: recoveryCode})
+        const foundEmail: RecoveryPassDocument | null = await RecoveryPassModel.findOne({recoveryCode: recoveryCode})
         if (!foundEmail) {
             return null
         }
         return foundEmail.email
     }
 
-    async changePassword(user: WithId<UserInDb>, newHash: string): Promise<void> {
-        console.log(user, newHash)
+    async changePassword(userId: string, newHash: string): Promise<void> {
 
-        await userCollection.updateOne(
-            {_id: user._id },
+        await RecoveryPassModel.updateOne(
+            {_id: new ObjectId(userId)},
             {
                 $set: {
                     password: newHash
@@ -35,7 +33,7 @@ export class AuthRepository {
     }
 
     async deleteRecoveryCode(email: any): Promise<void> {
-        await recoveryPassCollection.deleteOne({email: email});
+        await RecoveryPassModel.deleteOne({email: email});
     }
 
 }

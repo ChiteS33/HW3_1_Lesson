@@ -1,14 +1,13 @@
 import {BlogOutPut} from "../../types/blogOutPut";
-import {BlogInDb} from "../../types/blogInDb";
-import {WithId} from "mongodb";
+import {BlogDocument} from "../blogs.entity";
 
-export const blogMapper = (blog: WithId<BlogInDb>): BlogOutPut => {
+export const outPutBlogMapper = (blog: BlogDocument): BlogOutPut => {
     return {
         id: blog._id.toString(),
         name: blog.name,
         description: blog.description,
         websiteUrl: blog.websiteUrl,
-        createdAt: blog.createdAt,
+        createdAt: blog.createdAt.toISOString(),
         isMembership: blog.isMembership,
     }
 }

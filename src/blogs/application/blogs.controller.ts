@@ -10,20 +10,17 @@ import {BlogsService} from "./blogs.service";
 import {BlogsQueryRepository} from "../repositories/blogs.queryRepository";
 import {PostsService} from "../../posts/application/posts.service";
 import {PostsQueryRepository} from "../../posts/repositories/postsQueryRepository";
+import {inject} from "inversify";
+import {BlogDocument} from "../routers/blogs.entity";
 
 
 export class BlogsController {
 
-    blogsService: BlogsService;
-    blogsQueryRepository: BlogsQueryRepository;
-    postsService: PostsService;
-    postsQueryRepository: PostsQueryRepository;
 
-    constructor(blogsService: BlogsService, blogsQueryRepository: BlogsQueryRepository, postsService: PostsService, postsQueryRepository: PostsQueryRepository) {
-        this.blogsService = blogsService
-        this.blogsQueryRepository = blogsQueryRepository
-        this.postsService = postsService
-        this.postsQueryRepository = postsQueryRepository
+    constructor(@inject(BlogsService) public blogsService: BlogsService,
+                @inject(BlogsQueryRepository) public blogsQueryRepository: BlogsQueryRepository,
+                @inject(PostsService) public postsService: PostsService,
+                @inject(PostsQueryRepository) public postsQueryRepository: PostsQueryRepository) {
     }
 
 
@@ -90,11 +87,10 @@ export class BlogsController {
     async updateBlog(req: Request, res: Response) {
         const id = req.params.id;
         const body = req.body;
-        const blog = await this.blogsService.findById(id);
-        if (blog.status !== "Success") {
-            return res.sendStatus(resultCodeToHttpException(blog.status));
+        const blog: ObjectResult<BlogDocument | null> = await this.blogsService.update(id, body);
+        if (blog.status !== "NoContent") {
+            return res.sendStatus(resultCodeToHttpException(blog.status))
         }
-        await this.blogsService.update(id, body);
-        return res.sendStatus(resultCodeToHttpException(ResultStatus.NoContent));
+        return res.sendStatus(resultCodeToHttpException(blog.status));
     }
 }

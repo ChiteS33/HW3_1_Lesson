@@ -1,6 +1,4 @@
 import {Request, Response} from "express";
-import {WithId} from "mongodb";
-import {UserInDb} from "../../users/types/userInDb";
 import {CommentInPut} from "../../comments/types/commentInPut";
 import {ResultStatus} from "../../common/types/objectResultTypes";
 import {resultCodeToHttpException} from "../../common/mapper/resultCodeToHttp";
@@ -10,27 +8,25 @@ import {CommentsQueryRepository} from "../../comments/repositories/comments.quer
 import {CommentsService} from "../../comments/application/comments.service";
 import {PostsService} from "./posts.service";
 import {PostsQueryRepository} from "../repositories/postsQueryRepository";
+import {inject} from "inversify";
 
 export class PostsController {
 
-    commentsQueryRepository: CommentsQueryRepository;
-    commentsService: CommentsService;
-    postsService: PostsService;
-    postsQueryRepository: PostsQueryRepository;
 
-constructor(commentsQueryRepository: CommentsQueryRepository, commentsService: CommentsService, postsService: PostsService, postsQueryRepository: PostsQueryRepository) {
-    this.commentsQueryRepository = commentsQueryRepository;
-    this.commentsService = commentsService;
-    this.postsService = postsService;
-    this.postsQueryRepository = postsQueryRepository;
+
+constructor(@inject(CommentsQueryRepository) public commentsQueryRepository: CommentsQueryRepository,
+            @inject(CommentsService) public commentsService: CommentsService,
+            @inject(PostsService) public postsService: PostsService,
+            @inject(PostsQueryRepository) public postsQueryRepository: PostsQueryRepository) {
+
 }
 
 
     async createComment(req: Request, res: Response) {
-        const user: WithId<UserInDb> = req.user!
+        const user = req.user!
         const postId = req.params.id;
         const content: CommentInPut = req.body;
-        const commentId = await this.commentsService.create(user, content, postId);
+        const commentId = await this.commentsService.createComment(user.login, user._id.toString(), content, postId);
         if (commentId.status !== ResultStatus.Created) {
             return res.sendStatus(resultCodeToHttpException(commentId.status))
         }
@@ -87,7 +83,6 @@ constructor(commentsQueryRepository: CommentsQueryRepository, commentsService: C
         }
         return res.status(resultCodeToHttpException(posts.status)).send(posts.data)
     }
-
 
     async updatePost(req: Request, res: Response) {
         const postId: string = req.params.id;

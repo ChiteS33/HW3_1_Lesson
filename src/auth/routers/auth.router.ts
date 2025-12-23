@@ -7,11 +7,14 @@ import {codeInPutValidation} from "../validation/codeValidation";
 import {authEmailValidation} from "../validation/emailInPutValidation";
 import {refreshTokenMiddleware} from "../middlewares/refreshToken.middleware";
 import {checkRequestCounterMiddleware} from "../middlewares/checkRequestCounter.middleware";
-import {authController} from "../../composition-root";
+import {container} from "../../composition-root";
 import {emailValidationForRecovery} from "../middlewares/authCheckEmail";
 import {passAndCodeValidation} from "../middlewares/authInputValidationPassAndResCode";
+import {AuthController} from "../application/auth.controller";
+import "reflect-metadata";
 
 
+const authController = container.get(AuthController);
 export const authRouter = Router({});
 
 authRouter

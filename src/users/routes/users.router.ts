@@ -4,10 +4,13 @@ import {paginationValidationWithEmailAndLogin} from "../../common/validation/pag
 import {userInputDtoValidation} from "../validation/userInputValidation";
 import {idValidation} from "../../core/middlewares/validation/params-id.validation-middleware";
 import {inputValidationResultMiddleware} from "../../core/middlewares/validation/input-validtion-result.middleware";
-import {usersController} from "../../composition-root";
+import {container} from "../../composition-root";
+import "reflect-metadata";
+import {UsersController} from "../application/users.controller";
 
 
 
+const usersController = container.get(UsersController);
 export const usersRouter = Router({})
 
 

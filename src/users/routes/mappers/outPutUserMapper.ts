@@ -1,9 +1,8 @@
-import {WithId} from "mongodb";
-import {UserInDb} from "../../types/userInDb";
 import {UserOutPut} from "../../types/userOutPut";
+import {UserDocument} from "../users.entity";
 
 
-export const userMapper = (user: WithId<UserInDb>): UserOutPut => {
+export const outPutUserMapper = (user: UserDocument): UserOutPut => {
 
     return {
         id: user._id.toString(),

@@ -1,8 +1,8 @@
-import {PostInDb} from "../../types/postInDb";
 import {PostOutPut} from "../../types/postOutPut";
-import {WithId} from "mongodb";
 
-export const postMapper = (post: WithId<PostInDb> ):PostOutPut => {
+import {PostDocument} from "../posts.entity";
+
+export const outPutPostMapper = (post: PostDocument ):PostOutPut => {
     return {
         id: post._id.toString(),
         title: post.title,
@@ -10,6 +10,6 @@ export const postMapper = (post: WithId<PostInDb> ):PostOutPut => {
         content: post.content,
         blogId: post.blogId.toString(),
         blogName: post.blogName,
-        createdAt: post.createdAt
+        createdAt: post.createdAt.toString()
     }
 }

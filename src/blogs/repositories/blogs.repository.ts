@@ -1,38 +1,23 @@
-import {BlogInDb} from "../types/blogInDb";
-import {blogCollection} from "../../db/mongo.db";
-import {ObjectId, WithId} from "mongodb";
-import {BlogInputDto} from "../types/blogInPutDto";
+import {ObjectId} from "mongodb";
+import {BlogDocument, BlogModel} from "../routers/blogs.entity";
 
 
 export class BlogsRepository {
 
 
-    async findById(id: string): Promise<WithId<BlogInDb> | null> {
-        const foundBlog: WithId<BlogInDb> | null = await blogCollection.findOne({_id: new ObjectId(id)});
+    async save(blog: BlogDocument): Promise<string> {
+        const savedBlog = await blog.save()
+        return savedBlog._id.toString();
+    }
+
+    async findById(id: string): Promise<BlogDocument | null> {
+        const foundBlog: BlogDocument | null = await BlogModel.findOne({_id: new ObjectId(id)});
         if (!foundBlog) return null
         return foundBlog
     }
 
-    async create(newBlog: BlogInDb): Promise<string> {
-        const insertResult = await blogCollection.insertOne((newBlog))
-        return insertResult.insertedId.toString()
-    }
-
-    async update(id: string, newBlog: BlogInputDto): Promise<void> {
-        await blogCollection.updateOne(
-            {_id: new ObjectId(id)},
-            {
-                $set: {
-                    name: newBlog.name,
-                    description: newBlog.description,
-                    websiteUrl: newBlog.websiteUrl,
-                }
-            }
-        );
-    }
-
     async delete(id: string): Promise<void> {
-        await blogCollection.deleteOne({_id: new ObjectId(id)});
+        await BlogModel.deleteOne({_id: new ObjectId(id)});
     }
 
 

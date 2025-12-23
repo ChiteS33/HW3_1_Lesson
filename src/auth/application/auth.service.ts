@@ -1,47 +1,40 @@
-import {ObjectId, WithId} from "mongodb";
-import {UserInDb} from "../../users/types/userInDb";
+import {ObjectId} from "mongodb";
 import {add} from "date-fns";
-import {valuesUserMakerForRepo} from "../../users/routes/mappers/valuesUserMaker";
 import {UserInputDto} from "../../users/types/userInputDto";
 import {ObjectResult, ResultStatus} from "../../common/types/objectResultTypes";
-import {deviceMapperForRepo} from "../../securityDevices/routes/mappers/deviceMapperForRepo";
 import {Payload} from "../../common/types/payload";
-import {devicesCollection} from "../../db/mongo.db";
+import {sessionCollection} from "../../db/mongo.db";
 import {UsersRepository} from "../../users/repositories/users.repository";
 import {HashService} from "../../common/service/bcrypt.service";
 import {JwtService} from "../../common/service/jwt-service";
-import {SessionsService} from "../../securityDevices/application/securityDevices.service";
 import {EmailAdapter} from "../../adapters/email-adapter";
-import {RecoveryPassInDb} from "../../common/types/recoveryPassInDb";
 import {AuthRepository} from "../repositories/authRepository";
-import {recoveryMapper} from "../../common/mapper/recoveryPassMapper";
 import {UsersService} from "../../users/application/users.service";
+import "reflect-metadata";
+import {inject, injectable} from "inversify";
+import {UserDocument, UserModel} from "../../users/routes/users.entity";
+import {SessionsService} from "../../securityDevices/application/sessions.service";
+import {SessionsRepository} from "../../securityDevices/repositories/sessions.repository";
+import {SessionModel} from "../../securityDevices/routes/sessions.entity";
+import {RecoveryPassModel} from "../routers/auth.entity";
 
 
+@injectable()
 export class AuthService {
 
-    usersRepository: UsersRepository;
-    hashService: HashService;
-    emailAdapter: EmailAdapter;
-    jwtService: JwtService;
-    sessionsService: SessionsService;
-    authRepository: AuthRepository;
-    userService: UsersService
 
-
-    constructor(usersRepository: UsersRepository, hashService: HashService, emailAdapter: EmailAdapter, jwtService: JwtService, sessionsService: SessionsService, authRepository: AuthRepository, userService: UsersService) {
-        this.usersRepository = usersRepository;
-        this.hashService = hashService;
-        this.emailAdapter = emailAdapter;
-        this.jwtService = jwtService;
-        this.sessionsService = sessionsService;
-        this.authRepository = authRepository;
-        this.userService = userService;
-
+    constructor(@inject(UsersRepository) public usersRepository: UsersRepository,
+                @inject(HashService) public hashService: HashService,
+                @inject(EmailAdapter) public emailAdapter: EmailAdapter,
+                @inject(JwtService) public jwtService: JwtService,
+                @inject(SessionsService) public sessionsService: SessionsService,
+                @inject(AuthRepository) public authRepository: AuthRepository,
+                @inject(UsersService) public userService: UsersService,
+                @inject(SessionsRepository) public sessionsRepository: SessionsRepository) {
     }
 
 
-    async checking(logOrEmail: string, pass: string): Promise<ObjectResult<WithId<UserInDb> | null>> {
+    async checking(logOrEmail: string, pass: string): Promise<ObjectResult<UserDocument | null>> {
         const user = await this.usersRepository.findByLoginOrEmail(logOrEmail)
         if (!user) return {
             status: ResultStatus.Unauthorized,
@@ -71,7 +64,7 @@ export class AuthService {
 
     async createUser(body: UserInputDto): Promise<ObjectResult<null>> {
         const passwordHash: string = await this.hashService.hashMaker(body.password)
-        const user: WithId<UserInDb> | null = await this.usersRepository.findByLoginOrEmail(body.login)
+        const user: UserDocument | null = await this.usersRepository.findByLoginOrEmail(body.login)
         if (user) return {
             status: ResultStatus.BadRequest,
             errorMessage: "login already created",
@@ -91,8 +84,17 @@ export class AuthService {
             }],
             data: null
         }
-        const newUser: UserInDb = valuesUserMakerForRepo(body, passwordHash)
-        await this.usersRepository.create(newUser)
+
+        const newUser = new UserModel()
+        newUser.login = body.login
+        newUser.email = body.email
+        newUser.password = passwordHash
+        newUser.createdAt = new Date()
+        newUser.emailConfirmation.confirmationCode = crypto.randomUUID()
+        newUser.emailConfirmation.expirationDate = add(new Date(), {hours: 1})
+        newUser.emailConfirmation.isConfirmed = false
+
+        await this.usersRepository.save(newUser)
         await this.emailAdapter.sendEmail(newUser.email, "ChiteS", newUser.emailConfirmation.confirmationCode)
         return {
             status: ResultStatus.NoContent,
@@ -102,7 +104,7 @@ export class AuthService {
     }
 
     async confirmEmail(code: string): Promise<ObjectResult<null>> {
-        const user: WithId<UserInDb> | null = await this.usersRepository.findByCode(code)
+        const user: UserDocument | null = await this.usersRepository.findByCode(code)
         if (!user) return {
             status: ResultStatus.BadRequest,
             errorMessage: "Bad request",
@@ -139,7 +141,9 @@ export class AuthService {
             }],
             data: null
         }
-        await this.usersRepository.updateConfirmation(user._id)
+        user.emailConfirmation.isConfirmed = true
+        await this.usersRepository.save(user)
+
         return {
             status: ResultStatus.NoContent,
             extensions: [],
@@ -158,7 +162,7 @@ export class AuthService {
             }],
             data: null
         }
-        const userId = foundUser._id.toString()
+
         if (foundUser.emailConfirmation.isConfirmed) return {
             status: ResultStatus.BadRequest,
             errorMessage: "email is already confirmed",
@@ -170,7 +174,9 @@ export class AuthService {
         }
         const newConfirmationCode = crypto.randomUUID()
         const newExpirationDate = add(new Date(), {hours: 1})
-        await this.usersRepository.updateConfirmationCode(newConfirmationCode, newExpirationDate, userId)
+        foundUser.emailConfirmation.confirmationCode = newConfirmationCode
+        foundUser.emailConfirmation.expirationDate = newExpirationDate
+
         await this.emailAdapter.sendEmail(foundUser.email, "ChiteS", newConfirmationCode)
         return {
             status: ResultStatus.NoContent,
@@ -194,7 +200,16 @@ export class AuthService {
         const token = await this.jwtService.createJWT(userId);
         const refreshToken = await this.jwtService.createRefreshToken(userId)
         const payload: Payload = await this.jwtService.decodeJWT(refreshToken)
-        await this.sessionsService.createSession(deviceMapperForRepo(payload, deviceName, ip))
+
+        const newSession = new SessionModel()
+        newSession.userId = new ObjectId(payload.userId)
+        newSession.deviceId = new ObjectId(payload.deviceId)
+        newSession.iat = new Date(payload.iat * 1000)
+        newSession.deviceName = deviceName
+        newSession.ip = ip
+        newSession.exp = new Date(payload.exp * 1000)
+        await this.sessionsService.createSession(newSession)
+
         return {
             status: ResultStatus.Success,
             extensions: [],
@@ -214,16 +229,12 @@ export class AuthService {
         const newPayload: Payload = await this.jwtService.decodeJWT(newRefreshToken)
         const newIat = newPayload.iat
         const newExp = newPayload.exp
-        await devicesCollection.updateOne({
-                userId: new ObjectId(userId),
-                deviceId: new ObjectId(deviceId)
-            },
-            {
-                $set: {
-                    iat: new Date(newIat * 1000),
-                    exp: new Date(newExp * 1000)
-                }
-            })
+        const foundSession = await this.sessionsService.findByUserIdAndDeviceId(refreshToken)
+        const newSession = new SessionModel(foundSession)
+        newSession.iat = new Date(newIat * 1000)
+        newSession.exp = new Date(newExp * 1000)
+        await this.sessionsRepository.save(newSession)
+
         return {
             status: ResultStatus.Success,
             extensions: [],
@@ -244,7 +255,7 @@ export class AuthService {
                 data: null
             }
         }
-        await devicesCollection.deleteOne({_id: new ObjectId(foundSession.data._id)})
+        await sessionCollection.deleteOne({_id: new ObjectId(foundSession.data._id)})
         return {
             status: ResultStatus.NoContent,
             extensions: [],
@@ -254,7 +265,7 @@ export class AuthService {
 
     async passRecovery(email: string): Promise<ObjectResult<null>> {
 
-        const foundEmail: WithId<UserInDb> | null = await this.usersRepository.findByEmail(email)
+        const foundEmail: UserDocument | null = await this.usersRepository.findByEmail(email)
         if (!foundEmail) return {
             status: ResultStatus.NotFound,
             errorMessage: "email is not found",
@@ -265,8 +276,11 @@ export class AuthService {
             data: null
         }
         const recoveryCode = crypto.randomUUID()
-        const result: RecoveryPassInDb = recoveryMapper(email, recoveryCode)
-        await this.authRepository.pushInDb(result)                    // пушим данные в Коллекцию
+        const newResult = new RecoveryPassModel()
+        newResult.email = email
+        newResult.recoveryCode = recoveryCode
+        await this.authRepository.save(newResult)
+
         await this.emailAdapter.resendEmail(email, recoveryCode)
         return {
             status: ResultStatus.Success,
@@ -288,7 +302,7 @@ export class AuthService {
                 data: null
             }
         }
-        const foundUser: WithId<UserInDb> | null = await this.userService.findUserByEmail(foundEmail)
+        const foundUser: UserDocument | null = await this.userService.findUserByEmail(foundEmail)
         if (!foundUser) {
             return {
                 status: ResultStatus.NotFound,
@@ -301,7 +315,7 @@ export class AuthService {
             }
         }
         const newPassHash = await this.hashService.hashMaker(newPassword)
-        await this.authRepository.changePassword(foundUser, newPassHash)
+        await this.authRepository.changePassword(foundUser._id.toString(), newPassHash)
         await this.authRepository.deleteRecoveryCode(foundEmail)
         return {
             status: ResultStatus.NoContent,

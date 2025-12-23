@@ -1,22 +1,18 @@
 import {BlogInputDto} from "../types/blogInPutDto";
-import {blogsValueMaker} from "../routers/mappers/blogsMapperForRepo";
 import {ObjectResult, ResultStatus} from "../../common/types/objectResultTypes";
-import {BlogInDb} from "../types/blogInDb";
-import {WithId} from "mongodb";
 import {BlogsRepository} from "../repositories/blogs.repository";
-
+import {inject} from "inversify";
+import {BlogDocument, BlogModel} from "../routers/blogs.entity";
 
 
 export class BlogsService {
 
-    blogsRepository: BlogsRepository;
 
-    constructor(blogsRepository: BlogsRepository) {
-        this.blogsRepository = blogsRepository;
+    constructor(@inject(BlogsRepository) public blogsRepository: BlogsRepository) {
     }
 
-    async findById(id: string): Promise<ObjectResult<WithId<BlogInDb> | null>> {
-        const foundBlog = await this.blogsRepository.findById(id);
+    async findById(id: string): Promise<ObjectResult<BlogDocument | null>> {
+        const foundBlog: BlogDocument | null = await this.blogsRepository.findById(id);
         if (!foundBlog) return {
             status: ResultStatus.NotFound,
             errorMessage: " blogId is not founded",
@@ -34,8 +30,14 @@ export class BlogsService {
     }
 
     async createBlog(inputInfo: BlogInputDto): Promise<ObjectResult<string>> {
-        const newBlog = blogsValueMaker(inputInfo);
-        const createdBlogId = await this.blogsRepository.create(newBlog);
+        const newBlog = new BlogModel()
+        newBlog.name = inputInfo.name
+        newBlog.description = inputInfo.description
+        newBlog.websiteUrl = inputInfo.websiteUrl
+        newBlog.createdAt = new Date()
+        newBlog.isMembership = false
+        const createdBlogId = await this.blogsRepository.save(newBlog);
+
         return {
             status: ResultStatus.Created,
             extensions: [],
@@ -43,8 +45,23 @@ export class BlogsService {
         }
     }
 
-    async update(id: string, inputInfo: BlogInputDto): Promise<ObjectResult<void | null>> {
-        await this.blogsRepository.update(id, inputInfo);
+    async update(id: string, inputInfo: BlogInputDto): Promise<ObjectResult<null>> {
+        const foundBlog: BlogDocument | null = await this.blogsRepository.findById(id);
+        if (!foundBlog) {
+            return {
+                status: ResultStatus.NotFound,
+                errorMessage: "Blog is not found",
+                extensions: [{
+                    field: "BlogId",
+                    message: "Blog is not found"
+                }],
+                data: null
+            }
+        }
+        foundBlog.name = inputInfo.name
+        foundBlog.description = inputInfo.description
+        foundBlog.websiteUrl = inputInfo.websiteUrl
+        await this.blogsRepository.save(foundBlog);
         return {
             status: ResultStatus.NoContent,
             extensions: [],

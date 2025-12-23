@@ -2,9 +2,18 @@ import {NextFunction, Request, Response} from "express";
 import {resultCodeToHttpException} from "../../common/mapper/resultCodeToHttp";
 import {ObjectResult, ResultStatus} from "../../common/types/objectResultTypes";
 import {WithId} from "mongodb";
-import {DeviceInDb} from "../../securityDevices/types/deviceInDb";
-import {sessionsService, jwtService} from "../../composition-root";
+import {container} from "../../composition-root";
 import {Payload} from "../../common/types/payload";
+import {JwtService} from "../../common/service/jwt-service";
+import {SessionInDb} from "../../securityDevices/routes/sessions.entity";
+import {SessionsService} from "../../securityDevices/application/sessions.service";
+
+
+
+
+
+const jwtService = container.get(JwtService)
+const sessionsService = container.get(SessionsService);
 
 export const refreshTokenMiddleware = async (req: Request, res: Response, next: NextFunction) => {
     const refreshToken = req.cookies.refreshToken as string;
@@ -20,7 +29,7 @@ export const refreshTokenMiddleware = async (req: Request, res: Response, next: 
         res.status(resultCodeToHttpException(ResultStatus.Unauthorized)).send({message: "Refresh token expired or invalid"});
         return
     }
-    const session: ObjectResult<WithId<DeviceInDb> | null> = await sessionsService.findByUserIdAndDeviceId(refreshToken)
+    const session: ObjectResult<WithId<SessionInDb> | null> = await sessionsService.findByUserIdAndDeviceId(refreshToken)
     const currentDevice = session.data
     if (!currentDevice) {
         res.status(resultCodeToHttpException(ResultStatus.Unauthorized)).send("dsadsdsDASDSADDSd");

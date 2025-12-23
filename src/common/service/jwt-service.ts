@@ -3,8 +3,9 @@ import {settings} from "../settings";
 import {ObjectId} from "mongodb";
 import {jwtDecode} from "jwt-decode";
 import {Payload} from "../types/payload";
+import {injectable} from "inversify";
 
-
+@injectable()
 export class JwtService {
 
 

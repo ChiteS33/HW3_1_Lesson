@@ -6,10 +6,13 @@ import {postInputDtoValidationWithBlogId} from "../validation/postInputDtoValida
 import {paginationValidation} from "../../common/validation/paginationValidation";
 import {authorizationMiddleware} from "../../auth/middlewares/authorization.middleware";
 import {commentInputDtoValidation} from "../../comments/validation/commentsInputValidation";
-import {postsController} from "../../composition-root";
+import {container} from "../../composition-root";
+import {PostsController} from "../application/posts.controller";
+import "reflect-metadata";
 
 
 
+const postsController = container.get(PostsController);
 export const postsRouter = Router({});
 
 

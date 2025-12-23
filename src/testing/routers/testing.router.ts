@@ -2,7 +2,7 @@ import { Request, Response, Router } from 'express';
 import { HttpStatus } from '../../core/types/http-statuses';
 import {
     blogCollection,
-    commentCollection, devicesCollection,
+    commentCollection, sessionCollection,
     postCollection, recoveryPassCollection, requestCounterCollection,
     userCollection
 } from '../../db/mongo.db';
@@ -16,7 +16,7 @@ testingRouter.delete('/all-data', async (req: Request, res: Response) => {
         postCollection.deleteMany(),
         userCollection.deleteMany(),
         commentCollection.deleteMany(),
-        devicesCollection.deleteMany(),
+        sessionCollection.deleteMany(),
         requestCounterCollection.deleteMany(),
         recoveryPassCollection.deleteMany(),
 

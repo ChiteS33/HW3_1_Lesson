@@ -3,9 +3,14 @@ import {idValidation} from "../../core/middlewares/validation/params-id.validati
 import {authorizationMiddleware} from "../../auth/middlewares/authorization.middleware";
 import {commentInputDtoValidation} from "../validation/commentsInputValidation";
 import {inputValidationResultMiddleware} from "../../core/middlewares/validation/input-validtion-result.middleware";
-import {commentsController} from "../../composition-root";
+import {container} from "../../composition-root";
+import "reflect-metadata";
+import {CommentsController} from "../application/comments.controller";
 
 
+
+
+const commentsController = container.get(CommentsController);
 export const commentsRouter = Router({})
 
 

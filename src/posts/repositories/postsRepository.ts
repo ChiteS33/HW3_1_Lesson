@@ -1,38 +1,23 @@
-import {PostInputDto} from "../types/post-input.dto";
-import {postCollection} from "../../db/mongo.db";
-import {ObjectId, WithId} from "mongodb";
-import {PostInDb} from "../types/postInDb";
+import {ObjectId} from "mongodb";
+import {PostDocument, PostModel} from "../routes/posts.entity";
 
 
 export class PostsRepository {
 
 
-    async findById(id: string): Promise<WithId<PostInDb> | null> {
-        return await postCollection.findOne({_id: new ObjectId(id)});
+    async save(post: PostDocument): Promise<string> {
+        const savedPost = await post.save()
+        return savedPost._id.toString();
+
     }
 
-    async create(post: PostInDb): Promise<string> {
-        const createdPost = await postCollection.insertOne(post)
-        return createdPost.insertedId.toString()
-    }
+    async findById(id: string): Promise<PostDocument | null> {
+         return PostModel.findOne({_id: new ObjectId(id)});
 
-    async update(id: string, newPost: PostInputDto): Promise<string> {
-        await postCollection.updateOne(
-            {_id: new ObjectId(id)},
-            {
-                $set: {
-                    title: newPost.title,
-                    shortDescription: newPost.shortDescription,
-                    content: newPost.content,
-                    blogId: new ObjectId(newPost.blogId)
-                }
-            }
-        );
-        return id
     }
 
     async delete(id: string): Promise<void> {
-        await postCollection.deleteOne({_id: new ObjectId(id)});
+        await PostModel.deleteOne({_id: new ObjectId(id)});
         return
     }
 

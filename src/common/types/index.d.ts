@@ -1,10 +1,9 @@
-import {UserInDb} from "../../users/types/userInDb";
-import {WithId} from "mongodb";
+import {UserDocument} from "../../users/routes/users.entity";
 
 declare global {
     declare namespace Express {
         export interface Request {
-            user: WithId<UserInDb> | null
+            user: UserDocument | null
         }
     }
 }

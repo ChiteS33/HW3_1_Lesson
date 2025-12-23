@@ -1,25 +1,37 @@
-import {UserInDb} from "../types/userInDb";
 import {UserInputDto} from "../types/userInputDto";
-import {WithId} from "mongodb";
-import {userMapperForRepo} from "../../common/mapper/valuesUserMakerForRepo";
 import {ObjectResult, ResultStatus} from "../../common/types/objectResultTypes";
 import {HashService} from "../../common/service/bcrypt.service";
 import {UsersRepository} from "../repositories/users.repository";
+import {inject, injectable} from "inversify";
+import {UserDocument, UserModel} from "../routes/users.entity";
 
-
+@injectable()
 export class UsersService {
 
-    hashService: HashService;
-    usersRepository: UsersRepository;
 
-    constructor(hashService: HashService, usersRepository: UsersRepository) {
-        this.usersRepository = usersRepository;
-        this.hashService = hashService;
-
+    constructor(@inject(HashService) public hashService: HashService,
+                @inject(UsersRepository) public usersRepository: UsersRepository) {
     }
 
-    async findUserById(id: string): Promise<WithId<UserInDb> | null> {
-        return await this.usersRepository.findById(id);
+
+    async findUserById(id: string): Promise<ObjectResult<UserDocument | null>> {
+        const foundUser: UserDocument | null = await this.usersRepository.findById(id);
+        if (!foundUser) {
+            return {
+                status: ResultStatus.NotFound,
+                errorMessage: "User is not found",
+                extensions: [{
+                    field: "UserId",
+                    message: "User is not found"
+                }],
+                data: null
+            }
+        }
+        return {
+            status: ResultStatus.Success,
+            extensions: [],
+            data: foundUser
+        }
     }
 
     async create(inputInfo: UserInputDto): Promise<ObjectResult<null | string>> {
@@ -48,12 +60,22 @@ export class UsersService {
             }
         }
         const hash: string = await this.hashService.hashMaker(inputInfo.password)
-        const newUser: UserInDb = userMapperForRepo(inputInfo, hash);
-        const createdUser = await this.usersRepository.create(newUser)
+
+        const newUser: UserDocument = new UserModel(inputInfo);
+        newUser.login = inputInfo.login;
+        newUser.password = hash;
+        newUser.email = inputInfo.email;
+        newUser.createdAt = new Date();
+        newUser.emailConfirmation.confirmationCode = "";
+        newUser.emailConfirmation.expirationDate = new Date();
+        newUser.emailConfirmation.isConfirmed = true;
+
+        const createdUserId = await this.usersRepository.save(newUser);
+
         return {
             status: ResultStatus.Created,
             extensions: [],
-            data: createdUser
+            data: createdUserId
         }
     }
 
@@ -78,7 +100,7 @@ export class UsersService {
         }
     }
 
-    async findUserByEmail(email: string): Promise<WithId<UserInDb> | null> {
+    async findUserByEmail(email: string): Promise<UserDocument | null> {
         return await this.usersRepository.findByEmail(email);
     }
 }

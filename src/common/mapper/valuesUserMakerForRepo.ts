@@ -1,5 +1,6 @@
 import {UserInputDto} from "../../users/types/userInputDto";
-import {UserInDb} from "../../users/types/userInDb";
+import {UserInDb} from "../../users/routes/users.entity";
+
 
 export const userMapperForRepo = (user: UserInputDto, hash: string): UserInDb => {
     return {

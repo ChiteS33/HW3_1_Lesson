@@ -1,9 +1,8 @@
-
 import {PaginationForRepoWithSearchName} from "../../../common/types/paginationForRepoWithSearchName";
 import {InPutPaginationWithSearchName} from "../../../common/types/inPutPaginationWithSearchName";
 
 
-export const valuesMakerWithSearch = (query: InPutPaginationWithSearchName): PaginationForRepoWithSearchName => {
+export const outPutPaginationWithSearchMapper = (query: InPutPaginationWithSearchName): PaginationForRepoWithSearchName => {
     return {
         searchNameTerm: query.searchNameTerm ?? null,
         sortBy: query.sortBy ?? "createdAt",

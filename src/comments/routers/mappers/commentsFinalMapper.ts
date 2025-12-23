@@ -1,9 +1,8 @@
-import {CommentInDb} from "../../types/commentInDb";
-import {WithId} from "mongodb";
 import {CommentOutPut} from "../../types/commentOutPut";
+import {CommentDocument} from "../comments.entity";
 
 
-export const commentMapp = (dto: WithId<CommentInDb>): CommentOutPut => {
+export const commentMapper = (dto: CommentDocument): CommentOutPut => {
     return {
         id: dto._id.toString(),
         content: dto.content,

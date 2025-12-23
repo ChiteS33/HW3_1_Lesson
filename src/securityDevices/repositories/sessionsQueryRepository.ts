@@ -1,8 +1,8 @@
 import {ObjectResult, ResultStatus} from "../../common/types/objectResultTypes";
-import {devicesCollection} from "../../db/mongo.db";
 import {ObjectId} from "mongodb";
-import {deviceFinalMake} from "../routes/mappers/deviceFinalMapper";
 import {DeviceOutPut} from "../types/deviceOutPut";
+import {SessionDocument, SessionModel} from "../routes/sessions.entity";
+import {outPutSessionMapper} from "../routes/mappers/sessionMapper";
 
 
 
@@ -12,11 +12,11 @@ export class SessionsQueryRepository {
 
       async findAllDevicesByUserId(userId: any,): Promise<ObjectResult<DeviceOutPut[] | null>> {
         const currentDate = new Date();
-        const result = await devicesCollection.find({
+        const result: SessionDocument[] = await SessionModel.find({
             userId: new ObjectId(userId),
             exp: {$gt: currentDate}
-        }).toArray();
-        const resultForFront: DeviceOutPut[] = result.map(deviceFinalMake)
+        });
+        const resultForFront: DeviceOutPut[] = result.map(outPutSessionMapper)
         return {
             status: ResultStatus.Success,
             extensions: [],

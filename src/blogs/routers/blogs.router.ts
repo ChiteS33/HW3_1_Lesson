@@ -6,8 +6,14 @@ import {blogInputDtoValidation} from "../validation/blogsInputValidation";
 import {paginationValidationWithSearchName} from "../../common/validation/paginationValidationWithSearchName";
 import {postInputDtoValidation} from "../../posts/validation/postInputValidation";
 import {paginationValidation} from "../../common/validation/paginationValidation";
-import {blogsController} from "../../composition-root";
+import {container} from "../../composition-root";
+import {BlogsController} from "../application/blogs.controller";
+import "reflect-metadata";
 
+
+
+
+const blogsController = container.get(BlogsController);
 export const blogsRouter = Router({});
 
 blogsRouter

@@ -15,7 +15,8 @@ import {usersRouter} from "./users/routes/users.router";
 import {authRouter} from "./auth/routers/auth.router";
 import {commentsRouter} from "./comments/routers/comments.router";
 import cookieParser from "cookie-parser";
-import {devicesRouter} from "./securityDevices/routes/devicesRouter";
+import {sessionsRouter} from "./securityDevices/routes/sessionsRouter";
+
 
 export const setupApp = (app: Express) => {
     app.use(express.json());
@@ -30,7 +31,7 @@ export const setupApp = (app: Express) => {
     app.use(COMMENT_PATH, commentsRouter);
     app.use(AUTH_PATH, authRouter);
     app.use(TESTING_PATH, testingRouter);
-    app.use(DEVICES_PATH, devicesRouter)
+    app.use(DEVICES_PATH, sessionsRouter)
 
 
     return app;

@@ -1,14 +1,14 @@
-import {PostInDb} from "../types/postInDb";
 import {postCollection} from "../../db/mongo.db";
-import {ObjectId, WithId} from "mongodb";
-import {postMapper} from "../routes/mappers/postMapper";
-import {finalPostMapper} from "../routes/mappers/postFinalMapper";
+import {ObjectId} from "mongodb";
+import {outPutPostMapper} from "../routes/mappers/outPutPostMapper";
+import {outPutPaginationPostMapper} from "../routes/mappers/postFinalMapper";
 import {PostOutPut} from "../types/postOutPut";
 import {PaginationForRepo} from "../../common/types/paginationForRepo";
 import {FinalWithPagination} from "../../common/types/finalWithPagination";
 import {InPutPagination} from "../../common/types/inPutPagination";
 import {valuesPaginationMaker} from "../../common/mapper/valuesPaginationMaker";
 import {ObjectResult, ResultStatus} from "../../common/types/objectResultTypes";
+import {PostDocument, PostModel} from "../routes/posts.entity";
 
 
 export class PostsQueryRepository {
@@ -19,7 +19,7 @@ export class PostsQueryRepository {
         const limit = pagination.pageSize
         const skip = (pagination.pageSize * pagination.pageNumber) - pagination.pageSize
         const sort = {[pagination.sortBy]: pagination.sortDirection}
-        const preFinishValues: WithId<PostInDb>[] = await postCollection.find().skip(skip).limit(limit).sort(sort).toArray()
+        const preFinishValues: PostDocument[] = await PostModel.find().skip(skip).limit(limit).sort(sort)
         const totalCount = await postCollection.countDocuments()
         const addValuesForFront = {
             pagesCount: Math.ceil(totalCount / pagination.pageSize),
@@ -27,16 +27,16 @@ export class PostsQueryRepository {
             pageSize: limit,
             totalCount: totalCount,
         }
-        const postForFront: PostOutPut[] = preFinishValues.map(postMapper)
+        const postForFront: PostOutPut[] = preFinishValues.map(outPutPostMapper)
         return {
             status: ResultStatus.Success,
             extensions: [],
-            data: finalPostMapper(postForFront, addValuesForFront)
+            data: outPutPaginationPostMapper(postForFront, addValuesForFront)
         }
     }
 
     async findById(id: string): Promise<ObjectResult<PostOutPut | null>> {
-        const post: WithId<PostInDb> | null = await postCollection.findOne({_id: new ObjectId(id)})
+        const post: PostDocument | null = await PostModel.findOne({_id: new ObjectId(id)})
         if (!post) {
             return {
                 status: ResultStatus.NotFound,
@@ -51,7 +51,7 @@ export class PostsQueryRepository {
         return {
             status: ResultStatus.Success,
             extensions: [],
-            data: postMapper(post)
+            data: outPutPostMapper(post)
         }
     }
 
@@ -62,19 +62,19 @@ export class PostsQueryRepository {
         const sorting = {
             [pagination.sortBy]: pagination.sortDirection,
         }
-        const posts = await postCollection.find({blogId: new ObjectId(id)}).skip(skip).limit(limit).sort(sorting).toArray();
-        const totalCount = await postCollection.countDocuments({blogId: new ObjectId(id)})
+        const posts: PostDocument[] = await PostModel.find({blogId: new ObjectId(id)}).skip(skip).limit(limit).sort(sorting);
+        const totalCount = await PostModel.countDocuments({blogId: new ObjectId(id)})
         const addValuesForFront = {
             pagesCount: Math.ceil(totalCount / pagination.pageSize),
             page: pagination.pageNumber,
             pageSize: limit,
             totalCount: totalCount,
         }
-        const postsForFront: PostOutPut[] = posts.map(postMapper)
+        const postsForFront: PostOutPut[] = posts.map(outPutPostMapper)
         return {
             status: ResultStatus.Success,
             extensions: [],
-            data: finalPostMapper(postsForFront, addValuesForFront)
+            data: outPutPaginationPostMapper(postsForFront, addValuesForFront)
         }
     }
 

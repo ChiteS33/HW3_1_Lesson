@@ -1,56 +1,44 @@
-import {UserInDb} from "../types/userInDb";
-import {userCollection} from "../../db/mongo.db";
-import {ObjectId, WithId} from "mongodb";
+import {ObjectId} from "mongodb";
+import {injectable} from "inversify";
+import {UserDocument, UserModel} from "../routes/users.entity";
 
 
+
+@injectable()
 export class UsersRepository {
 
-    async findById(id: string): Promise<WithId<UserInDb> | null> {
-        const foundUser: WithId<UserInDb> | null = await userCollection.findOne({_id: new ObjectId(id)})
-        if (!foundUser) return null
-        return foundUser
+
+
+    async save(user: UserDocument): Promise<string> {
+        const savedUser: UserDocument =  await user.save();
+        return savedUser._id.toString();
     }
 
-    async create(newUser: UserInDb): Promise<string> {
-        const insertResult = await userCollection.insertOne((newUser))
-        return insertResult.insertedId.toString()
+    async findById(id: string): Promise<UserDocument | null> {
+        return  UserModel.findOne({_id: new ObjectId(id)})
 
     }
 
     async delete(id: string): Promise<void> {
-        await userCollection.deleteOne({_id: new ObjectId(id)});
+        await UserModel.deleteOne({_id: new ObjectId(id)});
     }
 
-    async findByName(login: string): Promise<UserInDb | null> {
-        return userCollection.findOne({login: login})
+    async findByName(login: string): Promise<UserDocument | null> {
+        return UserModel.findOne({login: login})
     }
 
-    async findByEmail(email: string): Promise<WithId<UserInDb> | null> {
-        return userCollection.findOne({email: email})
+    async findByEmail(email: string): Promise<UserDocument | null> {
+        return UserModel.findOne({email: email})
     }
 
-    async findByLoginOrEmail(loginOrEmail: string): Promise<WithId<UserInDb> | null> {
-        return userCollection.findOne({
+    async findByLoginOrEmail(loginOrEmail: string): Promise<UserDocument | null> {
+        return UserModel.findOne({
             $or: [{email: loginOrEmail}, {login: loginOrEmail}]
         })
     }
 
-    async updateConfirmation(_id: ObjectId): Promise<void> {
-        await userCollection.updateOne({_id}, {$set: {'emailConfirmation.isConfirmed': true}})
+    async findByCode(code: string): Promise<UserDocument | null> {
+        return UserModel.findOne({"emailConfirmation.confirmationCode": code});
     }
-
-    async findByCode(code: string): Promise<WithId<UserInDb> | null> {
-        return await userCollection.findOne({"emailConfirmation.confirmationCode": code})
-    }
-
-    async updateConfirmationCode(code: string, date: Date, id: string): Promise<void> {
-        await userCollection.updateOne({_id: new ObjectId(id)}, {
-            $set: {
-                'emailConfirmation.confirmationCode': code,
-                "emailConfirmation.expirationDate": date
-            }
-        })
-    }
-
 
 }

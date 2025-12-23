@@ -9,16 +9,14 @@ import {resultCodeToHttpException} from "../../common/mapper/resultCodeToHttp";
 import {UserInputDto} from "../types/userInputDto";
 import {UsersQueryRepository} from "../repositories/users.QueryRepository";
 import {UsersService} from "./users.service";
+import {inject} from "inversify";
 
 
 export class UsersController {
 
-    usersQueryRepository: UsersQueryRepository;
-    usersService: UsersService;
 
-    constructor(usersQueryRepository: UsersQueryRepository, usersService: UsersService) {
-        this.usersQueryRepository = usersQueryRepository;
-        this.usersService = usersService;
+    constructor(@inject(UsersQueryRepository) public usersQueryRepository: UsersQueryRepository,
+                @inject(UsersService) public usersService: UsersService) {
     }
 
 

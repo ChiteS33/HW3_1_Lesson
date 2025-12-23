@@ -5,7 +5,7 @@ import {OutPutPagination} from "../../../common/types/outputPagination";
 
 
 
-export const finalBlogMapper = (dto: BlogOutPut[], params: OutPutPagination): FinalWithPagination<BlogOutPut> => {
+export const outPutPaginationMapper = (dto: BlogOutPut[], params: OutPutPagination): FinalWithPagination<BlogOutPut> => {
 
     return {
         pagesCount: params.pagesCount,

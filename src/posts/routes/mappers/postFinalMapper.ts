@@ -3,7 +3,7 @@ import {FinalWithPagination} from "../../../common/types/finalWithPagination";
 import {OutPutPagination} from "../../../common/types/outputPagination";
 
 
-export const finalPostMapper = (dto: PostOutPut[], params: OutPutPagination): FinalWithPagination<PostOutPut> => {
+export const outPutPaginationPostMapper = (dto: PostOutPut[], params: OutPutPagination): FinalWithPagination<PostOutPut> => {
 
     return {
         pagesCount: params.pagesCount,
