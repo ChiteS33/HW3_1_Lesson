@@ -1,7 +1,10 @@
-import {ObjectId} from "mongodb";
 import {CommentDocument, CommentModel} from "../routers/comments.entity";
+import "reflect-metadata"
+import {injectable} from "inversify";
 
 
+
+@injectable()
 export class CommentsRepository {
 
     async save(comment: CommentDocument): Promise<string> {
@@ -10,11 +13,11 @@ export class CommentsRepository {
     }
 
     async findById(id: string): Promise<CommentDocument | null> {
-        return CommentModel.findOne({_id: new ObjectId(id)});
+        return CommentModel.findOne({_id: id});
     }
 
     async delete(id: string): Promise<void> {
-        await CommentModel.deleteOne({_id: new ObjectId(id)});
+        await CommentModel.deleteOne({_id: id});
     }
 
 

@@ -1,7 +1,6 @@
 import {PaginationForRepoWithSearchName} from "../../common/types/paginationForRepoWithSearchName";
 import {FinalWithPagination} from "../../common/types/finalWithPagination";
 import {BlogOutPut} from "../types/blogOutPut";
-import {ObjectId} from "mongodb";
 import {OutPutPagination} from "../../common/types/outputPagination";
 import {outPutBlogMapper} from "../routers/mappers/blogsMapper";
 import {outPutPaginationMapper} from "../routers/mappers/blogsFinalMapper";
@@ -9,8 +8,13 @@ import {outPutPaginationWithSearchMapper} from "../routers/mappers/blogsPaginati
 import {InPutPagination} from "../../common/types/inPutPagination";
 import {ObjectResult, ResultStatus} from "../../common/types/objectResultTypes";
 import {BlogDocument, BlogModel} from "../routers/blogs.entity";
+import "reflect-metadata"
+import {injectable} from "inversify";
 
 
+
+
+@injectable()
 export class BlogsQueryRepository {
 
 
@@ -43,7 +47,7 @@ export class BlogsQueryRepository {
     }
 
      async findById(id: string): Promise<ObjectResult<BlogOutPut | null>> {
-        const foundBlog: BlogDocument | null = await BlogModel.findOne({_id: new ObjectId(id)});
+        const foundBlog: BlogDocument | null = await BlogModel.findOne({_id: id});
         if (!foundBlog) return {
             status: ResultStatus.NotFound,
             errorMessage: "blog is not founded",

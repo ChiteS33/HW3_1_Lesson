@@ -6,6 +6,9 @@ import {JwtService} from "../../common/service/jwt-service";
 import {inject, injectable} from "inversify";
 import {SessionDocument, SessionInDb} from "../routes/sessions.entity";
 import {SessionsRepository} from "../repositories/sessions.repository";
+import "reflect-metadata"
+
+
 
 @injectable()
 export class SessionsService {

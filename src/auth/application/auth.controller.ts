@@ -1,15 +1,18 @@
+import "reflect-metadata";
+import {inject, injectable} from "inversify";
 import {Request, Response} from 'express';
 import {resultCodeToHttpException} from "../../common/mapper/resultCodeToHttp";
 import {ResultStatus} from "../../common/types/objectResultTypes";
 import {UserInputDto} from "../../users/types/userInputDto";
 import {AuthService} from "./auth.service";
-import {inject, injectable} from "inversify";
-import "reflect-metadata";
+
+
+
+
 
 
 @injectable()
 export class AuthController {
-
 
     constructor(@inject(AuthService) public authService: AuthService) {
     }
@@ -26,9 +29,11 @@ export class AuthController {
     }
 
     async tryLoginInUser(req: Request, res: Response) {
+        console.log("SADDASDASDDASD!!@!@!")
         const deviceName = req.headers['user-agent'] as string
         const ip = req.ip as string;
         const {loginOrEmail, password} = req.body;
+
         const result = await this.authService.login(loginOrEmail, password, deviceName, ip);
         if (result.status !== "Success" || !result.data) {
             return res.status(resultCodeToHttpException(result.status)).send({errorsMessages: result.extensions});

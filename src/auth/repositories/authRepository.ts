@@ -1,6 +1,8 @@
-import {ObjectId} from "mongodb";
 import {injectable} from "inversify";
 import {RecoveryPassDocument, RecoveryPassModel} from "../routers/auth.entity";
+import "reflect-metadata"
+
+
 
 
 @injectable()
@@ -23,7 +25,7 @@ export class AuthRepository {
     async changePassword(userId: string, newHash: string): Promise<void> {
 
         await RecoveryPassModel.updateOne(
-            {_id: new ObjectId(userId)},
+            {_id: userId},
             {
                 $set: {
                     password: newHash

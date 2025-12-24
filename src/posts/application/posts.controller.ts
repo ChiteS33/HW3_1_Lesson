@@ -8,18 +8,20 @@ import {CommentsQueryRepository} from "../../comments/repositories/comments.quer
 import {CommentsService} from "../../comments/application/comments.service";
 import {PostsService} from "./posts.service";
 import {PostsQueryRepository} from "../repositories/postsQueryRepository";
-import {inject} from "inversify";
+import {inject, injectable} from "inversify";
+import "reflect-metadata"
 
+
+@injectable()
 export class PostsController {
 
 
+    constructor(@inject(CommentsQueryRepository) public commentsQueryRepository: CommentsQueryRepository,
+                @inject(CommentsService) public commentsService: CommentsService,
+                @inject(PostsService) public postsService: PostsService,
+                @inject(PostsQueryRepository) public postsQueryRepository: PostsQueryRepository) {
 
-constructor(@inject(CommentsQueryRepository) public commentsQueryRepository: CommentsQueryRepository,
-            @inject(CommentsService) public commentsService: CommentsService,
-            @inject(PostsService) public postsService: PostsService,
-            @inject(PostsQueryRepository) public postsQueryRepository: PostsQueryRepository) {
-
-}
+    }
 
 
     async createComment(req: Request, res: Response) {
@@ -40,6 +42,7 @@ constructor(@inject(CommentsQueryRepository) public commentsQueryRepository: Com
     async createPost(req: Request, res: Response) {
         const body = req.body;
         const createdPostId = await this.postsService.createPost(body);
+
         if (!createdPostId.data) {
             return res.sendStatus(resultCodeToHttpException(createdPostId.status));
         }

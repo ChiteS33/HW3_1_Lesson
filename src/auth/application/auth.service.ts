@@ -1,3 +1,5 @@
+import "reflect-metadata";
+import {inject, injectable} from "inversify";
 import {ObjectId} from "mongodb";
 import {add} from "date-fns";
 import {UserInputDto} from "../../users/types/userInputDto";
@@ -10,13 +12,12 @@ import {JwtService} from "../../common/service/jwt-service";
 import {EmailAdapter} from "../../adapters/email-adapter";
 import {AuthRepository} from "../repositories/authRepository";
 import {UsersService} from "../../users/application/users.service";
-import "reflect-metadata";
-import {inject, injectable} from "inversify";
 import {UserDocument, UserModel} from "../../users/routes/users.entity";
 import {SessionsService} from "../../securityDevices/application/sessions.service";
 import {SessionsRepository} from "../../securityDevices/repositories/sessions.repository";
 import {SessionModel} from "../../securityDevices/routes/sessions.entity";
 import {RecoveryPassModel} from "../routers/auth.entity";
+
 
 
 @injectable()
@@ -35,6 +36,7 @@ export class AuthService {
 
 
     async checking(logOrEmail: string, pass: string): Promise<ObjectResult<UserDocument | null>> {
+
         const user = await this.usersRepository.findByLoginOrEmail(logOrEmail)
         if (!user) return {
             status: ResultStatus.Unauthorized,
@@ -45,6 +47,7 @@ export class AuthService {
             }],
             data: null
         }
+
         const isValid = await this.hashService.compareHash(pass, user.password)
         if (!isValid) return {
             status: ResultStatus.Unauthorized,

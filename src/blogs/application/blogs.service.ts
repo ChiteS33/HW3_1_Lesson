@@ -1,10 +1,12 @@
 import {BlogInputDto} from "../types/blogInPutDto";
 import {ObjectResult, ResultStatus} from "../../common/types/objectResultTypes";
 import {BlogsRepository} from "../repositories/blogs.repository";
-import {inject} from "inversify";
+import {inject, injectable} from "inversify";
 import {BlogDocument, BlogModel} from "../routers/blogs.entity";
+import "reflect-metadata"
 
 
+@injectable()
 export class BlogsService {
 
 

@@ -2,12 +2,16 @@ import {CommentInPut} from "../types/commentInPut";
 import {ObjectResult, ResultStatus} from "../../common/types/objectResultTypes";
 import {PostsService} from "../../posts/application/posts.service";
 import {CommentsRepository} from "../repositories/comments.repository";
-import {inject} from "inversify";
+import {inject, injectable} from "inversify";
 import {CommentDocument, CommentModel} from "../routers/comments.entity";
 import {PostDocument} from "../../posts/routes/posts.entity";
 import {ObjectId} from "mongodb";
+import "reflect-metadata"
 
 
+
+
+@injectable()
 export class CommentsService {
 
 

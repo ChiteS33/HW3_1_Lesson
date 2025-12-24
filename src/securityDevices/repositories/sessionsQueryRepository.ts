@@ -3,10 +3,13 @@ import {ObjectId} from "mongodb";
 import {DeviceOutPut} from "../types/deviceOutPut";
 import {SessionDocument, SessionModel} from "../routes/sessions.entity";
 import {outPutSessionMapper} from "../routes/mappers/sessionMapper";
+import "reflect-metadata"
+import {injectable} from "inversify";
 
 
 
 
+@injectable()
 export class SessionsQueryRepository {
 
 

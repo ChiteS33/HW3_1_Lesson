@@ -1,6 +1,5 @@
 import {NextFunction, Request, Response} from "express";
-import {requestCounterCollection} from "../../db/mongo.db";
-import {RequestCounter} from "../../common/types/requestCounter";
+import {RequestCounter, RequestCounterModel} from "../routers/auth.entity";
 
 
 export const checkRequestCounterMiddleware = async (req: Request, res: Response, next: NextFunction) => {
@@ -20,13 +19,13 @@ export const checkRequestCounterMiddleware = async (req: Request, res: Response,
     }
     const info = resultForCollection(ip, url, iat)
 
-    const foundSessions = await requestCounterCollection.find(
+    const foundSessions = await RequestCounterModel.find(
         {
             ip: ip,
             url: url,
             time: {$gte: tenSeconds}
-        }).toArray()
-    await requestCounterCollection.insertOne(info)
+        })
+    await RequestCounterModel.insertOne(info)
     if (foundSessions.length >= 5) {
         res.status(429).send("Too much requests per 10s")
         return

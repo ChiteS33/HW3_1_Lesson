@@ -1,4 +1,5 @@
-import {ObjectId, WithId} from "mongodb";
+import "reflect-metadata"
+import {injectable} from "inversify";
 import {
     PaginationWithSearchLoginTermAndSearchEMailTermForRepo
 } from "../../common/types/paginationWithSearchLoginAndEmailForRepo";
@@ -12,10 +13,12 @@ import {
     InPutPaginationWithSearchLoginTermAndSearchEMailTerm
 } from "../../common/types/inPutPaginationWithSearchLoginTermAndSearchEmailTerm";
 import {ObjectResult, ResultStatus} from "../../common/types/objectResultTypes";
-import {UserDocument, UserInDb, UserModel} from "../routes/users.entity";
+import {UserDocument, UserModel} from "../routes/users.entity";
 
 
 
+
+@injectable()
 export class UsersQueryRepository {
 
     async findAll(query: InPutPaginationWithSearchLoginTermAndSearchEMailTerm): Promise<ObjectResult<FinalWithPagination<UserOutPut>>> {
@@ -46,7 +49,7 @@ export class UsersQueryRepository {
     }
 
     async findById(userId: string): Promise<ObjectResult<UserOutPut | null>> {
-        const user: UserDocument | null = await UserModel.findOne({_id: new ObjectId(userId)})
+        const user: UserDocument | null = await UserModel.findOne({_id: userId})
         if (!user) {
             return {
                 status: ResultStatus.NotFound,

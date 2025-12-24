@@ -1,4 +1,3 @@
-import {ObjectId, WithId} from "mongodb";
 import {commentMapper} from "../routers/mappers/commentsFinalMapper";
 import {CommentOutPut} from "../types/commentOutPut";
 import {valuesPaginationMaker} from "../../common/mapper/valuesPaginationMaker";
@@ -9,10 +8,15 @@ import {FinalWithPagination} from "../../common/types/finalWithPagination";
 import {InPutPagination} from "../../common/types/inPutPagination";
 import {ObjectResult, ResultStatus} from "../../common/types/objectResultTypes";
 import {PostsService} from "../../posts/application/posts.service";
-import {inject} from "inversify";
+import {inject, injectable} from "inversify";
 import {CommentDocument, CommentModel} from "../routers/comments.entity";
+import "reflect-metadata"
+import {ObjectId} from "mongodb";
 
 
+
+
+@injectable()
 export class CommentsQueryRepository {
 
     constructor(@inject(PostsService) public postsService: PostsService) {
@@ -21,7 +25,7 @@ export class CommentsQueryRepository {
 
 
     async findById(id: string): Promise<ObjectResult<CommentOutPut | null>> {
-        const foundComment: CommentDocument | null = await CommentModel.findOne({_id: new ObjectId(id)})
+        const foundComment: CommentDocument | null = await CommentModel.findOne({_id: id})
         if (!foundComment) return {
             status: ResultStatus.NotFound,
             errorMessage: "Could not find comment",

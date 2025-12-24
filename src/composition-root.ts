@@ -1,3 +1,4 @@
+import {Container} from "inversify";
 import {AuthController} from "./auth/application/auth.controller";
 import {AuthService} from "./auth/application/auth.service";
 import {JwtService} from "./common/service/jwt-service";
@@ -20,7 +21,6 @@ import {BlogsQueryRepository} from "./blogs/repositories/blogs.queryRepository";
 import {CommentsController} from "./comments/application/comments.controller";
 import {UsersController} from "./users/application/users.controller";
 import {AuthRepository} from "./auth/repositories/authRepository";
-import {Container} from "inversify";
 import {SessionsController} from "./securityDevices/application/sessions.controller";
 import {SessionsService} from "./securityDevices/application/sessions.service";
 import {SessionsRepository} from "./securityDevices/repositories/sessions.repository";

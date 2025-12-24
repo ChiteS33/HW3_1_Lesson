@@ -10,10 +10,13 @@ import {BlogsService} from "./blogs.service";
 import {BlogsQueryRepository} from "../repositories/blogs.queryRepository";
 import {PostsService} from "../../posts/application/posts.service";
 import {PostsQueryRepository} from "../../posts/repositories/postsQueryRepository";
-import {inject} from "inversify";
+import {inject, injectable} from "inversify";
 import {BlogDocument} from "../routers/blogs.entity";
+import "reflect-metadata"
 
 
+
+@injectable()
 export class BlogsController {
 
 

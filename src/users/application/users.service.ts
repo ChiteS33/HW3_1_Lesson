@@ -1,13 +1,17 @@
+import "reflect-metadata"
+import {inject, injectable} from "inversify";
 import {UserInputDto} from "../types/userInputDto";
 import {ObjectResult, ResultStatus} from "../../common/types/objectResultTypes";
 import {HashService} from "../../common/service/bcrypt.service";
 import {UsersRepository} from "../repositories/users.repository";
-import {inject, injectable} from "inversify";
 import {UserDocument, UserModel} from "../routes/users.entity";
+
+
+
+
 
 @injectable()
 export class UsersService {
-
 
     constructor(@inject(HashService) public hashService: HashService,
                 @inject(UsersRepository) public usersRepository: UsersRepository) {
@@ -16,6 +20,7 @@ export class UsersService {
 
     async findUserById(id: string): Promise<ObjectResult<UserDocument | null>> {
         const foundUser: UserDocument | null = await this.usersRepository.findById(id);
+        console.log("asldk");
         if (!foundUser) {
             return {
                 status: ResultStatus.NotFound,
@@ -35,7 +40,9 @@ export class UsersService {
     }
 
     async create(inputInfo: UserInputDto): Promise<ObjectResult<null | string>> {
+
         const oldUserByEmail = await this.usersRepository.findByEmail(inputInfo.email);
+
         if (oldUserByEmail) {
             return {
                 status: ResultStatus.BadRequest,
@@ -47,7 +54,9 @@ export class UsersService {
                 data: null
             }
         }
+
         const oldUserByLogin = await this.usersRepository.findByName(inputInfo.login);
+
         if (oldUserByLogin) {
             return {
                 status: ResultStatus.BadRequest,
@@ -60,17 +69,21 @@ export class UsersService {
             }
         }
         const hash: string = await this.hashService.hashMaker(inputInfo.password)
-
-        const newUser: UserDocument = new UserModel(inputInfo);
+        const newUser: UserDocument = new UserModel();
         newUser.login = inputInfo.login;
         newUser.password = hash;
         newUser.email = inputInfo.email;
         newUser.createdAt = new Date();
-        newUser.emailConfirmation.confirmationCode = "";
-        newUser.emailConfirmation.expirationDate = new Date();
-        newUser.emailConfirmation.isConfirmed = true;
+
+
+        newUser.emailConfirmation = {confirmationCode : null,
+            expirationDate : new Date(),
+            isConfirmed : true}
+        // newUser.emailConfirmation.expirationDate = new Date();
+        // newUser.emailConfirmation.isConfirmed = true;
 
         const createdUserId = await this.usersRepository.save(newUser);
+
 
         return {
             status: ResultStatus.Created,
@@ -80,7 +93,7 @@ export class UsersService {
     }
 
     async delete(userId: string): Promise<ObjectResult<null>> {
-        const user = await this.findUserById(userId);
+                const user = await this.findUserById(userId);
         if (!user) {
             return {
                 status: ResultStatus.NotFound,

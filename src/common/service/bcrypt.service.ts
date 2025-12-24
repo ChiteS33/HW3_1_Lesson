@@ -1,5 +1,8 @@
-import bcrypt from 'bcrypt';
+import "reflect-metadata"
 import {injectable} from "inversify";
+import bcrypt from 'bcrypt';
+
+
 
 @injectable()
 export class HashService {

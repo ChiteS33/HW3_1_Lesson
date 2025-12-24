@@ -1,3 +1,5 @@
+import "reflect-metadata";
+
 import {Router} from "express";
 import {loginOrEmailValidation} from "../../common/validation/paginationLoginAndPass";
 import {authorizationMiddleware} from "../middlewares/authorization.middleware";
@@ -11,11 +13,10 @@ import {container} from "../../composition-root";
 import {emailValidationForRecovery} from "../middlewares/authCheckEmail";
 import {passAndCodeValidation} from "../middlewares/authInputValidationPassAndResCode";
 import {AuthController} from "../application/auth.controller";
-import "reflect-metadata";
 
 
-const authController = container.get(AuthController);
 export const authRouter = Router({});
+const authController = container.get(AuthController);
 
 authRouter
     .post('/login', checkRequestCounterMiddleware, loginOrEmailValidation, inputValidationResultMiddleware, authController.tryLoginInUser.bind(authController))

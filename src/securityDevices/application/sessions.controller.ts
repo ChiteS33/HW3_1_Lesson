@@ -5,10 +5,14 @@ import {DeviceOutPut} from "../types/deviceOutPut";
 import {resultCodeToHttpException} from "../../common/mapper/resultCodeToHttp";
 import {SessionsQueryRepository} from "../repositories/sessionsQueryRepository";
 import {JwtService} from "../../common/service/jwt-service";
-import {inject} from "inversify";
+import {inject, injectable} from "inversify";
 import {SessionsService} from "./sessions.service";
+import "reflect-metadata"
 
 
+
+
+@injectable()
 export class SessionsController {
 
 

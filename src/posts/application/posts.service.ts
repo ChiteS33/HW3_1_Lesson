@@ -4,11 +4,13 @@ import {ObjectResult, ResultStatus} from "../../common/types/objectResultTypes";
 import {ObjectId, WithId} from "mongodb";
 import {BlogsService} from "../../blogs/application/blogs.service";
 import {PostsRepository} from "../repositories/postsRepository";
-import {inject} from "inversify";
-import {PostDocument, PostInDb, PostModel} from "../routes/posts.entity";
+import {inject, injectable} from "inversify";
+import {PostDocument, PostModel} from "../routes/posts.entity";
+import "reflect-metadata"
 
 
 
+@injectable()
 export class PostsService {
 
     constructor(@inject(BlogsService) public blogsService: BlogsService,
@@ -53,7 +55,7 @@ export class PostsService {
         newPost.title = body.title
         newPost.shortDescription = body.shortDescription
         newPost.content = body.content
-        newPost.blogId = new ObjectId(blog.data._id)
+        newPost.blogId = blog.data._id.toString()
         newPost.blogName = blog.data.name
         newPost.createdAt = new Date()
 
@@ -94,7 +96,7 @@ export class PostsService {
         updatedPost.title = body.title
         updatedPost.shortDescription = body.shortDescription
         updatedPost.content = body.content
-        updatedPost.blogId = new ObjectId(blog.data._id)
+        updatedPost.blogId = blog.data._id.toString()
         const updatedPostId = await this.postsRepository.save(updatedPost)
 
         return {
@@ -142,7 +144,7 @@ export class PostsService {
         newPost.title = inputInfo.title
         newPost.shortDescription = inputInfo.shortDescription
         newPost.content = inputInfo.content
-        newPost.blogId = new ObjectId(blog.data._id)
+        newPost.blogId = blog.data._id.toString()
         newPost.blogName = blog.data.name
         newPost.createdAt = new Date()
 

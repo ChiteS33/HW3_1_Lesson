@@ -1,6 +1,9 @@
 import {ObjectId} from "mongodb";
-import {SessionDocument, SessionInDb, SessionModel} from "../routes/sessions.entity";
-import {injectable} from "inversify/lib/esm";
+import {SessionDocument, SessionModel} from "../routes/sessions.entity";
+import {injectable} from "inversify";
+import "reflect-metadata"
+
+
 
 @injectable()
 export class SessionsRepository {

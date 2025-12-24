@@ -2,9 +2,13 @@ import {Request, Response} from "express";
 import {resultCodeToHttpException} from "../../common/mapper/resultCodeToHttp";
 import {CommentsService} from "./comments.service";
 import {CommentsQueryRepository} from "../repositories/comments.queryRepository";
-import {inject} from "inversify";
+import {inject, injectable} from "inversify";
+import "reflect-metadata"
 
 
+
+
+@injectable()
 export class CommentsController {
 
 

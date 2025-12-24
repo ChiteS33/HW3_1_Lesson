@@ -1,5 +1,6 @@
 import * as mongoose from "mongoose";
 import {HydratedDocument, model, Model} from "mongoose";
+import {factory} from "ts-jest/dist/transformers/hoist-jest";
 
 export type UserInDb = {
     login: string,
@@ -10,13 +11,13 @@ export type UserInDb = {
 }
 
 export type emailConfirmationInDb = {
-    confirmationCode: string,
+    confirmationCode: string | null,
     expirationDate: Date,
     isConfirmed: boolean,
 }
 
 const emailConfirmationSchema = new mongoose.Schema<emailConfirmationInDb>({
-    confirmationCode: {type: String},
+    confirmationCode: {type: String, required: false, default: null},
     expirationDate: {type: Date},
     isConfirmed: {type: Boolean},
 })
@@ -25,7 +26,7 @@ const emailConfirmationSchema = new mongoose.Schema<emailConfirmationInDb>({
 const userSchema = new mongoose.Schema<UserInDb>({
     login: {type: String, required: true, minLength: 3, maxLength: 10},
     email: {type: String, required: true},
-    password: {type: String, required: true, minLength: 6, maxLength: 20},
+    password: {type: String, required: true, minLength: 6, maxLength: 500},
     createdAt: {type: Date, required: true},
     emailConfirmation: {type: emailConfirmationSchema}
 }, {

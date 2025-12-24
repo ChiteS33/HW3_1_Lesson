@@ -1,4 +1,3 @@
-import {postCollection} from "../../db/mongo.db";
 import {ObjectId} from "mongodb";
 import {outPutPostMapper} from "../routes/mappers/outPutPostMapper";
 import {outPutPaginationPostMapper} from "../routes/mappers/postFinalMapper";
@@ -9,18 +8,23 @@ import {InPutPagination} from "../../common/types/inPutPagination";
 import {valuesPaginationMaker} from "../../common/mapper/valuesPaginationMaker";
 import {ObjectResult, ResultStatus} from "../../common/types/objectResultTypes";
 import {PostDocument, PostModel} from "../routes/posts.entity";
+import "reflect-metadata"
+import {injectable} from "inversify";
 
 
+@injectable()
 export class PostsQueryRepository {
 
 
     async findAll(query: InPutPagination): Promise<ObjectResult<FinalWithPagination<PostOutPut>>> {
+
         const pagination: PaginationForRepo = valuesPaginationMaker(query)
         const limit = pagination.pageSize
         const skip = (pagination.pageSize * pagination.pageNumber) - pagination.pageSize
         const sort = {[pagination.sortBy]: pagination.sortDirection}
         const preFinishValues: PostDocument[] = await PostModel.find().skip(skip).limit(limit).sort(sort)
-        const totalCount = await postCollection.countDocuments()
+        const totalCount = await PostModel.countDocuments()
+
         const addValuesForFront = {
             pagesCount: Math.ceil(totalCount / pagination.pageSize),
             page: pagination.pageNumber,
@@ -36,7 +40,7 @@ export class PostsQueryRepository {
     }
 
     async findById(id: string): Promise<ObjectResult<PostOutPut | null>> {
-        const post: PostDocument | null = await PostModel.findOne({_id: new ObjectId(id)})
+        const post: PostDocument | null = await PostModel.findOne({_id: id})
         if (!post) {
             return {
                 status: ResultStatus.NotFound,
@@ -62,8 +66,8 @@ export class PostsQueryRepository {
         const sorting = {
             [pagination.sortBy]: pagination.sortDirection,
         }
-        const posts: PostDocument[] = await PostModel.find({blogId: new ObjectId(id)}).skip(skip).limit(limit).sort(sorting);
-        const totalCount = await PostModel.countDocuments({blogId: new ObjectId(id)})
+        const posts: PostDocument[] = await PostModel.find({blogId: id}).skip(skip).limit(limit).sort(sorting);
+        const totalCount = await PostModel.countDocuments({blogId: id})
         const addValuesForFront = {
             pagesCount: Math.ceil(totalCount / pagination.pageSize),
             page: pagination.pageNumber,

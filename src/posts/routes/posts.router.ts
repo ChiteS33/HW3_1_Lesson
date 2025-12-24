@@ -1,3 +1,4 @@
+import "reflect-metadata";
 import {Router} from 'express';
 import {idValidation} from "../../core/middlewares/validation/params-id.validation-middleware";
 import {inputValidationResultMiddleware} from "../../core/middlewares/validation/input-validtion-result.middleware";
@@ -8,7 +9,7 @@ import {authorizationMiddleware} from "../../auth/middlewares/authorization.midd
 import {commentInputDtoValidation} from "../../comments/validation/commentsInputValidation";
 import {container} from "../../composition-root";
 import {PostsController} from "../application/posts.controller";
-import "reflect-metadata";
+
 
 
 
