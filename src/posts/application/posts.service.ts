@@ -1,7 +1,7 @@
 import {PostInputDto} from "../types/post-input.dto";
 import {PostInputDtoForBlog} from "../types/postInBlog";
 import {ObjectResult, ResultStatus} from "../../common/types/objectResultTypes";
-import {ObjectId, WithId} from "mongodb";
+import {WithId} from "mongodb";
 import {BlogsService} from "../../blogs/application/blogs.service";
 import {PostsRepository} from "../repositories/postsRepository";
 import {inject, injectable} from "inversify";

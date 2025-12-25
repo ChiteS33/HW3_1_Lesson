@@ -1,4 +1,3 @@
-import {ObjectId} from "mongodb";
 import {outPutPostMapper} from "../routes/mappers/outPutPostMapper";
 import {outPutPaginationPostMapper} from "../routes/mappers/postFinalMapper";
 import {PostOutPut} from "../types/postOutPut";

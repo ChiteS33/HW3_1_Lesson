@@ -9,11 +9,9 @@ import {InPutPagination} from "../../common/types/inPutPagination";
 import {ObjectResult, ResultStatus} from "../../common/types/objectResultTypes";
 import {PostsService} from "../../posts/application/posts.service";
 import {inject, injectable} from "inversify";
-import {CommentDocument, CommentModel} from "../routers/comments.entity";
+import {CommentDocument, CommentModel, LikeDocument, LikeModel} from "../routers/comments.entity";
 import "reflect-metadata"
-import {ObjectId} from "mongodb";
-
-
+import {commentsFinalMapperWithCount} from "../routers/mappers/commentsFinalMapperWithCount";
 
 
 @injectable()
@@ -24,8 +22,11 @@ export class CommentsQueryRepository {
     }
 
 
-    async findById(id: string): Promise<ObjectResult<CommentOutPut | null>> {
-        const foundComment: CommentDocument | null = await CommentModel.findOne({_id: id})
+    async findByCommentId(commentId: string, user: any): Promise<ObjectResult<CommentOutPut | null>> {
+        const totalCountLike = await LikeModel.countDocuments({commentId: commentId, status: "Like"})
+        const totalCountDislike = await LikeModel.countDocuments({commentId: commentId, status: "Dislike"})
+        let myStatus = "None"
+        const foundComment: CommentDocument | null = await CommentModel.findOne({_id: commentId})
         if (!foundComment) return {
             status: ResultStatus.NotFound,
             errorMessage: "Could not find comment",
@@ -35,10 +36,39 @@ export class CommentsQueryRepository {
             }],
             data: null
         };
+        if (user === null) {
+            return {
+                status: ResultStatus.Success,
+                extensions: [],
+                data: commentsFinalMapperWithCount(foundComment, {totalCountLike, totalCountDislike, myStatus})
+            }
+        }
+        const userId = user._id.toString()
+        const foundLikeForComment: LikeDocument | null = await LikeModel.findOne({commentId, userId});
+                if (!foundLikeForComment) {
+            return {
+                status: ResultStatus.NotFound,
+                errorMessage: "Like not found",
+                extensions: [{
+                    field: "commentId",
+                    message: "Like not found"
+                }],
+                data: null
+            }
+        }
+        const foundLikeStatus = foundLikeForComment.status;
+        if (userId !== foundLikeForComment.userId) {
+            return {
+                status: ResultStatus.Success,
+                extensions: [],
+                data: commentsFinalMapperWithCount(foundComment, {totalCountLike, totalCountDislike, myStatus}),
+            }
+        }
+        myStatus = foundLikeStatus
         return {
             status: ResultStatus.Success,
             extensions: [],
-            data: commentMapper(foundComment)
+            data: commentsFinalMapperWithCount(foundComment, {totalCountLike, totalCountDislike, myStatus}),
         }
     }
 
@@ -59,7 +89,7 @@ export class CommentsQueryRepository {
         const skip = (pagination.pageSize * pagination.pageNumber) - pagination.pageSize
         const limit = pagination.pageSize
         const sort = {[pagination.sortBy]: pagination.sortDirection}
-        const search = {postId: new ObjectId(postId)}
+        const search = {postId: postId}
         const comments: CommentDocument[] = await CommentModel.find(search).skip(skip).limit(limit).sort(sort);
         if (!comments) {
             return {

@@ -6,8 +6,6 @@ import {inject, injectable} from "inversify";
 import "reflect-metadata"
 
 
-
-
 @injectable()
 export class CommentsController {
 
@@ -27,9 +25,14 @@ export class CommentsController {
 
 
     async getCommentById(req: Request, res: Response) {
+
         const commentId = req.params.id;
-        const comment = await this.commentsQueryRepository.findById(commentId);
-        if (comment.status !== "Success") {
+        const user = req.user
+
+
+        const comment = await this.commentsQueryRepository.findByCommentId(commentId, user);
+
+                if (comment.status !== "Success") {
             return res.sendStatus(resultCodeToHttpException(comment.status));
         }
         return res.status(resultCodeToHttpException(comment.status)).send(comment.data);
@@ -43,5 +46,18 @@ export class CommentsController {
         const updatedCommentResult = await this.commentsService.updateComment(commentId, body, userLogin)
 
         return res.sendStatus(resultCodeToHttpException(updatedCommentResult.status));
+    }
+
+    async createLikeForComment(req: Request, res: Response) {
+
+        const commentId = req.params.id;
+        const likeStatus = req.body.likeStatus;
+        const userId = req.user!._id.toString();
+
+        const result = await this.commentsService.setLikeStatus(commentId, userId, likeStatus)
+        if (result.status !== "NoContent") {
+            return res.status(resultCodeToHttpException(result.status)).send({errorMessages: result.extensions})
+        }
+        return res.sendStatus(resultCodeToHttpException(result.status));
     }
 }

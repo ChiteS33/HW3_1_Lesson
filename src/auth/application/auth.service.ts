@@ -1,11 +1,9 @@
 import "reflect-metadata";
 import {inject, injectable} from "inversify";
-import {ObjectId} from "mongodb";
 import {add} from "date-fns";
 import {UserInputDto} from "../../users/types/userInputDto";
 import {ObjectResult, ResultStatus} from "../../common/types/objectResultTypes";
 import {Payload} from "../../common/types/payload";
-import {sessionCollection} from "../../db/mongo.db";
 import {UsersRepository} from "../../users/repositories/users.repository";
 import {HashService} from "../../common/service/bcrypt.service";
 import {JwtService} from "../../common/service/jwt-service";
@@ -17,7 +15,6 @@ import {SessionsService} from "../../securityDevices/application/sessions.servic
 import {SessionsRepository} from "../../securityDevices/repositories/sessions.repository";
 import {SessionModel} from "../../securityDevices/routes/sessions.entity";
 import {RecoveryPassModel} from "../routers/auth.entity";
-
 
 
 @injectable()
@@ -205,8 +202,9 @@ export class AuthService {
         const payload: Payload = await this.jwtService.decodeJWT(refreshToken)
 
         const newSession = new SessionModel()
-        newSession.userId = new ObjectId(payload.userId)
-        newSession.deviceId = new ObjectId(payload.deviceId)
+        newSession.userId = payload.userId
+        newSession.deviceId = payload.deviceId
+
         newSession.iat = new Date(payload.iat * 1000)
         newSession.deviceName = deviceName
         newSession.ip = ip
@@ -258,7 +256,7 @@ export class AuthService {
                 data: null
             }
         }
-        await sessionCollection.deleteOne({_id: new ObjectId(foundSession.data._id)})
+        await SessionModel.deleteOne({_id: foundSession.data._id})
         return {
             status: ResultStatus.NoContent,
             extensions: [],

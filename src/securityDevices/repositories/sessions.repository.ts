@@ -1,4 +1,3 @@
-import {ObjectId} from "mongodb";
 import {SessionDocument, SessionModel} from "../routes/sessions.entity";
 import {injectable} from "inversify";
 import "reflect-metadata"
@@ -15,14 +14,20 @@ export class SessionsRepository {
     }
 
     async deleteById(deviceId: string): Promise<void> {
-        await SessionModel.deleteOne({deviceId: new ObjectId(deviceId)});
+        await SessionModel.deleteOne({deviceId: deviceId});
     }
 
     async deleteAlmostAll(userId: string, deviceId: any): Promise<void> {
         await SessionModel.deleteMany({
-            userId: new ObjectId(userId),
-            deviceId: {$ne: new ObjectId(deviceId)}
+            userId: userId,
+            deviceId: {$ne: deviceId}
         })
+    }
+
+    async findByUserIdAndDeviceId(userId: string, deviceId: string): Promise<any> {
+        const result = await SessionModel.findOne({deviceId, userId});
+        if (!result) return null;
+        return result._id.toString();
     }
 
 

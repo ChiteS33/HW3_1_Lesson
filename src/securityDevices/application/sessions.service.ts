@@ -1,10 +1,9 @@
 import {ObjectResult, ResultStatus} from "../../common/types/objectResultTypes";
 import {Payload} from "../../common/types/payload";
-import {sessionCollection} from "../../db/mongo.db";
-import {ObjectId, WithId} from "mongodb";
+import {WithId} from "mongodb";
 import {JwtService} from "../../common/service/jwt-service";
 import {inject, injectable} from "inversify";
-import {SessionDocument, SessionInDb} from "../routes/sessions.entity";
+import {SessionDocument, SessionInDb, SessionModel} from "../routes/sessions.entity";
 import {SessionsRepository} from "../repositories/sessions.repository";
 import "reflect-metadata"
 
@@ -21,9 +20,9 @@ export class SessionsService {
 
     async findByUserIdAndDeviceId(refreshToken: any): Promise<ObjectResult<WithId<SessionInDb> | null>> {
         const payloadRefreshToken: Payload = await this.jwtService.decodeJWT(refreshToken)
-        const userId = new ObjectId(payloadRefreshToken.userId)
-        const deviceId = new ObjectId(payloadRefreshToken.deviceId)
-        const foundSession: WithId<SessionInDb> | null = await sessionCollection.findOne({userId, deviceId})
+        const userId = payloadRefreshToken.userId
+        const deviceId = payloadRefreshToken.deviceId
+        const foundSession: WithId<SessionInDb> | null = await this.sessionsRepository.findByUserIdAndDeviceId(userId, deviceId)
         if (!foundSession) {
             return {
                 status: ResultStatus.NotFound,
@@ -64,8 +63,8 @@ export class SessionsService {
         }
     }
 
-    async findSessionById(deviceId: any): Promise<ObjectResult<WithId<SessionInDb> | null>> {
-        const result = await sessionCollection.findOne({deviceId: new ObjectId(deviceId)})
+    async findSessionById(deviceId: any): Promise<ObjectResult<SessionDocument | null>> {
+        const result: SessionDocument | null = await SessionModel.findOne({deviceId: deviceId})
         if (!result) {
             return {
                 status: ResultStatus.NotFound,
@@ -87,7 +86,7 @@ export class SessionsService {
     async deleteByDeviceId(refreshToken: any, deviceId: string): Promise<ObjectResult<any>> {
         const payloadRefreshToken: Payload = await this.jwtService.decodeJWT(refreshToken)
         const userId: string = payloadRefreshToken.userId
-        const foundSessionByUserIdFromToken: ObjectResult<WithId<SessionInDb> | null> = await this.findSessionById(deviceId)
+        const foundSessionByUserIdFromToken: ObjectResult<SessionDocument | null> = await this.findSessionById(deviceId)
         if (!foundSessionByUserIdFromToken.data) {
             return {
                 status: ResultStatus.NotFound,

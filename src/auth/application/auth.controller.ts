@@ -29,12 +29,12 @@ export class AuthController {
     }
 
     async tryLoginInUser(req: Request, res: Response) {
-        console.log("SADDASDASDDASD!!@!@!")
+
         const deviceName = req.headers['user-agent'] as string
         const ip = req.ip as string;
         const {loginOrEmail, password} = req.body;
-
         const result = await this.authService.login(loginOrEmail, password, deviceName, ip);
+
         if (result.status !== "Success" || !result.data) {
             return res.status(resultCodeToHttpException(result.status)).send({errorsMessages: result.extensions});
         }

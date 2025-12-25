@@ -1,9 +1,10 @@
 import request from "supertest";
 import express, {Express} from "express";
 import {setupApp} from "../../../src/setup-app";
-import {runDB, userCollection} from "../../../src/db/mongo.db";
+import {runDB} from "../../../src/db/mongo.db";
 import {SETTINGS} from "../../../src/core/settings/settings";
 import {EmailAdapter} from "../../../src/adapters/email-adapter";
+import {UserModel} from "../../../src/users/routes/users.entity";
 
 
 
@@ -130,7 +131,7 @@ describe('AUTH', () => {
                 .expect(400)
         })
         it('confirm if code is valid', async () => {
-            const user = await userCollection.findOne({login: user1.login})
+            const user = await UserModel.findOne({login: user1.login})
             const code = user!.emailConfirmation.confirmationCode
 
 
@@ -140,7 +141,7 @@ describe('AUTH', () => {
                 .expect(204)
         })
         it('can`t confirm twice', async () => {
-            const user = await userCollection.findOne({login: user1.login})
+            const user = await UserModel.findOne({login: user1.login})
             const code = user!.emailConfirmation.confirmationCode
 
 
@@ -172,7 +173,7 @@ describe('AUTH', () => {
                 .expect(204)
         })
         it('confirm if code is valid', async () => {
-            const user = await userCollection.findOne({login: user1.login})
+            const user = await UserModel.findOne({login: user1.login})
             const code = user!.emailConfirmation.confirmationCode
 
 

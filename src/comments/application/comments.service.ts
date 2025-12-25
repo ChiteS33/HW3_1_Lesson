@@ -3,11 +3,10 @@ import {ObjectResult, ResultStatus} from "../../common/types/objectResultTypes";
 import {PostsService} from "../../posts/application/posts.service";
 import {CommentsRepository} from "../repositories/comments.repository";
 import {inject, injectable} from "inversify";
-import {CommentDocument, CommentModel} from "../routers/comments.entity";
+import {CommentDocument, CommentModel, LikeDislikeStatus, LikeDocument, LikeModel} from "../routers/comments.entity";
 import {PostDocument} from "../../posts/routes/posts.entity";
-import {ObjectId} from "mongodb";
 import "reflect-metadata"
-
+import {UsersService} from "../../users/application/users.service";
 
 
 
@@ -16,13 +15,80 @@ export class CommentsService {
 
 
     constructor(@inject(PostsService) public postsService: PostsService,
-                @inject(CommentsRepository) public commentsRepository: CommentsRepository,) {
+                @inject(CommentsRepository) public commentsRepository: CommentsRepository,
+                @inject(UsersService) public usersService: UsersService,) {
     }
 
 
-    async findCommentById(id: string): Promise<ObjectResult<CommentDocument | null>> {
-        const result: CommentDocument | null = await this.commentsRepository.findById(id);
-        if (!result) {
+    // async findCommentByIdWithCounter(commentId: string, userId: string): Promise<ObjectResult<CommentDocument | null>> {
+    //     const defaultCount = {
+    //         totalCountLike: 0,
+    //         totalCountDislike: 0,
+    //         userStatus: "None"
+    //     }
+    //     const foundComment: ObjectResult<CommentDocument | null> = await this.findCommentById(commentId);
+    //     if (foundComment.status !== "Success") {
+    //         return {
+    //             status: ResultStatus.NotFound,
+    //             errorMessage: "Comment not found",
+    //             extensions: [{
+    //                 field: "commentId",
+    //                 message: "Comment not found"
+    //             }],
+    //             data: null
+    //         }
+    //     }
+    //     const foundLike = await this.commentsRepository.findLikeByCommentId(commentId)
+    //     if (!foundLike) {
+    //         return {
+    //             status: ResultStatus.NotFound,
+    //             errorMessage: "Like not found",
+    //             extensions: [{
+    //                 field: "CommentId",
+    //                 message: "Like not found"
+    //             }],
+    //             data: commentsFinalMapperWithCount(foundComment.data!, defaultCount)
+    //         }
+    //     }
+    //
+    //
+    //     // const foundLike: LikeDocument | null = await this.commentsRepository.findLike(userId, commentId)
+    //     // if (!foundLike) {
+    //     //     return {
+    //     //         status: ResultStatus.NotFound,
+    //     //         errorMessage: "Like not found",
+    //     //         extensions: [{
+    //     //             field: "userId and commentId",
+    //     //             message: "Like not found"
+    //     //         }],
+    //     //         data:commentsFinalMapperWithCount(foundComment.data!, defaultCount)
+    //     //     }
+    //     // }
+    //     // const foundLikeCounter = await this.commentsRepository.findLikeInComment(commentId, userId!);
+    //     // if (!foundLikeCounter) {
+    //     //     return {
+    //     //         status: ResultStatus.NotFound,
+    //     //         errorMessage: "Like not found",
+    //     //         extensions: [{
+    //     //             field: "Like",
+    //     //             message: "Like not found"
+    //     //         }],
+    //     //         data: null
+    //     //
+    //     //     }
+    //     // }
+    //     // const final = commentsFinalMapperWithCount(foundComment.data!, foundLikeCounter);
+    //     return {
+    //         status: ResultStatus.Success,
+    //         extensions: [],
+    //         data: final
+    //     }
+    // }
+
+
+    async findCommentById(commentId: string): Promise<ObjectResult<CommentDocument | null>> {
+        const foundComment: CommentDocument | null = await this.commentsRepository.findById(commentId);
+        if (!foundComment) {
             return {
                 status: ResultStatus.NotFound,
                 errorMessage: "Comment not found",
@@ -33,10 +99,11 @@ export class CommentsService {
                 data: null
             }
         }
+
         return {
             status: ResultStatus.Success,
             extensions: [],
-            data: result
+            data: foundComment
         }
     }
 
@@ -56,8 +123,8 @@ export class CommentsService {
 
         const newComment = new CommentModel()
         newComment.content = body.content
-        newComment.postId = new ObjectId(postId);
-        newComment.commentatorInfo.userId = new ObjectId(userId);
+        newComment.postId = postId;
+        newComment.commentatorInfo.userId = userId;
         newComment.commentatorInfo.userLogin = userLogin;
         newComment.createdAt = new Date();
         const createdCommentId = await this.commentsRepository.save(newComment);
@@ -71,7 +138,7 @@ export class CommentsService {
 
     async updateComment(id: string, body: CommentInPut, userLogin: string): Promise<ObjectResult<null>> {
         const foundComment: ObjectResult<CommentDocument | null> = await this.findCommentById(id)
-        if (!foundComment.data) {
+        if (foundComment.status === "NotFound") {
             return {
                 status: ResultStatus.NotFound,
                 errorMessage: "Comment not found",
@@ -136,5 +203,62 @@ export class CommentsService {
         }
     }
 
+    async setLikeStatus(commentId: string, userId: string, likeStatus: LikeDislikeStatus): Promise<ObjectResult<null>> {
+
+        const foundComment = await this.findCommentById(commentId);
+        if (foundComment.status !== "Success") {
+            return {
+                status: ResultStatus.NotFound,
+                errorMessage: "Comment not found",
+                extensions: [{
+                    field: "commentId",
+                    message: "Comment not found"
+                }],
+                data: null
+            }
+        }
+        const foundLike = await this.findLikeByUserIdAndCommentId(userId, commentId)
+
+        if (foundLike.status !== "Success") {
+            const newLike = new LikeModel()
+            newLike.userId = userId
+            newLike.commentId = commentId
+            newLike.status = likeStatus
+            await this.commentsRepository.saveLikeStatus(newLike)
+
+            return {
+                status: ResultStatus.NoContent,
+                extensions: [],
+                data: null
+            }
+        }
+        foundLike.data!.status = likeStatus
+        await this.commentsRepository.saveLikeStatus(foundLike.data)
+        return {
+            status: ResultStatus.NoContent,
+            extensions: [],
+            data: null
+        }
+    }
+
+    async findLikeByUserIdAndCommentId(userId: string, commentId: string): Promise<ObjectResult<LikeDocument | null>> {
+        const foundLike: LikeDocument | null = await this.commentsRepository.findLikeByCommentId(commentId, userId)
+        if (!foundLike) {
+            return {
+                status: ResultStatus.NotFound,
+                errorMessage: "Like not found",
+                extensions: [{
+                    field: "Like",
+                    message: "Like not found"
+                }],
+                data: null
+            }
+        }
+        return {
+            status: ResultStatus.Success,
+            extensions: [],
+            data: foundLike
+        }
+    }
 
 }

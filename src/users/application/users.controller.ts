@@ -25,7 +25,7 @@ export class UsersController {
 
 
     async getUserList(req: Request, res: Response) {
-        console.log('bobr zhopa')
+
         const query: InPutPaginationWithSearchLoginTermAndSearchEMailTerm = req.query
         const users: ObjectResult<FinalWithPagination<UserOutPut>> = await this.usersQueryRepository.findAll(query)
         if (users.status !== ResultStatus.Success) {
@@ -42,7 +42,7 @@ export class UsersController {
             return res.status(resultCodeToHttpException(createdUserId.status)).send({errorsMessages: createdUserId.extensions});
         }
         const createdUser = await this.usersQueryRepository.findById(createdUserId.data!)
-        console.log(createdUser)
+
         if (createdUser.status !== ResultStatus.Success) {
             return res.status(resultCodeToHttpException(createdUserId.status))
         }

@@ -1,5 +1,4 @@
 import "reflect-metadata";
-
 import {Router} from "express";
 import {loginOrEmailValidation} from "../../common/validation/paginationLoginAndPass";
 import {authorizationMiddleware} from "../middlewares/authorization.middleware";

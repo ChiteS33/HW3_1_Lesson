@@ -1,9 +1,9 @@
 import mongoose, {HydratedDocument, model, Model} from "mongoose";
-import {ObjectId} from "mongodb";
+
 
 export type SessionInDb = {
-    userId: ObjectId;
-    deviceId: ObjectId;
+    userId: String;
+    deviceId: String;
     iat: Date;
     deviceName: string;
     ip: string;
@@ -11,8 +11,8 @@ export type SessionInDb = {
 }
 
 const sessionSchema = new mongoose.Schema<SessionInDb>({
-    userId:{ type: ObjectId},
-    deviceId:{ type: ObjectId},
+    userId:{ type: String},
+    deviceId:{ type: String},
     iat:{ type: Date},
     deviceName:{ type: String},
     ip:{ type: String},
