@@ -8,7 +8,6 @@ const jwtService = container.get(JwtService)
 const usersService = container.get(UsersService);
 
 
-
 export const authorizationMiddleware = async (req: Request, res: Response, next: NextFunction) => {
     if (!req.headers.authorization) return res.sendStatus(HttpStatus.Unauthorized);
     const token = req.headers.authorization.split(' ')[1];

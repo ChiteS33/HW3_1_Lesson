@@ -17,7 +17,7 @@ export class SessionsRepository {
         await SessionModel.deleteOne({deviceId: deviceId});
     }
 
-    async deleteAlmostAll(userId: string, deviceId: any): Promise<void> {
+    async deleteAlmostAll(userId: string, deviceId: string): Promise<void> {
         await SessionModel.deleteMany({
             userId: userId,
             deviceId: {$ne: deviceId}

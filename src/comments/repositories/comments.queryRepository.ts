@@ -1,4 +1,3 @@
-import {commentMapper} from "../routers/mappers/commentsFinalMapper";
 import {CommentOutPut} from "../types/commentOutPut";
 import {valuesPaginationMaker} from "../../common/mapper/valuesPaginationMaker";
 import {PaginationForRepo} from "../../common/types/paginationForRepo";
@@ -22,7 +21,7 @@ export class CommentsQueryRepository {
     }
 
 
-    async findByCommentId(commentId: string, user: any): Promise<ObjectResult<CommentOutPut | null>> {
+    async findByCommentId(commentId: string, userId: string): Promise<ObjectResult<CommentOutPut | null>> {
         const totalCountLike = await LikeModel.countDocuments({commentId: commentId, status: "Like"})
         const totalCountDislike = await LikeModel.countDocuments({commentId: commentId, status: "Dislike"})
         let myStatus = "None"
@@ -36,35 +35,26 @@ export class CommentsQueryRepository {
             }],
             data: null
         };
-        if (user === null) {
+        if (userId === null) {
             return {
                 status: ResultStatus.Success,
                 extensions: [],
                 data: commentsFinalMapperWithCount(foundComment, {totalCountLike, totalCountDislike, myStatus})
             }
         }
-        const userId = user._id.toString()
         const foundLikeForComment: LikeDocument | null = await LikeModel.findOne({commentId, userId});
-                if (!foundLikeForComment) {
+        if (!foundLikeForComment) {
             return {
-                status: ResultStatus.NotFound,
+                status: ResultStatus.Success,
                 errorMessage: "Like not found",
                 extensions: [{
                     field: "commentId",
                     message: "Like not found"
                 }],
-                data: null
+                data: commentsFinalMapperWithCount(foundComment, {totalCountLike, totalCountDislike, myStatus})
             }
         }
-        const foundLikeStatus = foundLikeForComment.status;
-        if (userId !== foundLikeForComment.userId) {
-            return {
-                status: ResultStatus.Success,
-                extensions: [],
-                data: commentsFinalMapperWithCount(foundComment, {totalCountLike, totalCountDislike, myStatus}),
-            }
-        }
-        myStatus = foundLikeStatus
+        myStatus = foundLikeForComment.status;
         return {
             status: ResultStatus.Success,
             extensions: [],
@@ -72,7 +62,7 @@ export class CommentsQueryRepository {
         }
     }
 
-    async findByPostId(postId: string, query: InPutPagination): Promise<ObjectResult<FinalWithPagination<CommentOutPut> | null>> {
+    async findByPostId(postId: string, query: InPutPagination, userId: string): Promise<ObjectResult<FinalWithPagination<CommentOutPut> | null>> {
         const result = await this.postsService.findById(postId);
         if (!result.data) {
             return {
@@ -102,6 +92,13 @@ export class CommentsQueryRepository {
                 data: null
             }
         }
+        const mappedCommentsPromises = comments.map((comment) => {
+            return this.findByCommentId(comment._id.toString(), userId)
+        })
+        const mappedComments = await Promise.all(mappedCommentsPromises)
+        const commentsWithLikes = mappedComments.map((comment) => {
+            return comment.data!
+        })
         const totalCount = await CommentModel.countDocuments(search)
         const params: OutPutPagination = {
             pagesCount: Math.ceil(totalCount / limit),
@@ -109,13 +106,11 @@ export class CommentsQueryRepository {
             pageSize: limit,
             totalCount: totalCount,
         }
-        const commentsForFront: CommentOutPut[] = comments.map(commentMapper)
         return {
             status: ResultStatus.Success,
             extensions: [],
-            data: finalCommentsMapperWithPago(commentsForFront, params)
+            data: finalCommentsMapperWithPago(commentsWithLikes, params)
         }
     }
-
 
 }

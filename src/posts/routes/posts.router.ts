@@ -9,6 +9,7 @@ import {authorizationMiddleware} from "../../auth/middlewares/authorization.midd
 import {commentInputDtoValidation} from "../../comments/validation/commentsInputValidation";
 import {container} from "../../composition-root";
 import {PostsController} from "../application/posts.controller";
+import {authorizationForCommentWitLike} from "../../auth/middlewares/authorizationForCommentWithLike.middleware";
 
 
 
@@ -18,7 +19,7 @@ export const postsRouter = Router({});
 
 
 postsRouter
-    .get('/:id/comments', idValidation, paginationValidation, postsController.getCommentsByPostId.bind(postsController))
+    .get('/:id/comments', authorizationForCommentWitLike, inputValidationResultMiddleware, idValidation, paginationValidation, postsController.getCommentsByPostId.bind(postsController))
     .post('/:id/comments',authorizationMiddleware, idValidation, commentInputDtoValidation, inputValidationResultMiddleware, postsController.createComment.bind(postsController))
     .get('', paginationValidation, postsController.getPostList.bind(postsController))
     .post('', superAdminGuardMiddleware, postInputDtoValidationWithBlogId, inputValidationResultMiddleware, postsController.createPost.bind(postsController))

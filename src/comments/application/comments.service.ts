@@ -20,72 +20,6 @@ export class CommentsService {
     }
 
 
-    // async findCommentByIdWithCounter(commentId: string, userId: string): Promise<ObjectResult<CommentDocument | null>> {
-    //     const defaultCount = {
-    //         totalCountLike: 0,
-    //         totalCountDislike: 0,
-    //         userStatus: "None"
-    //     }
-    //     const foundComment: ObjectResult<CommentDocument | null> = await this.findCommentById(commentId);
-    //     if (foundComment.status !== "Success") {
-    //         return {
-    //             status: ResultStatus.NotFound,
-    //             errorMessage: "Comment not found",
-    //             extensions: [{
-    //                 field: "commentId",
-    //                 message: "Comment not found"
-    //             }],
-    //             data: null
-    //         }
-    //     }
-    //     const foundLike = await this.commentsRepository.findLikeByCommentId(commentId)
-    //     if (!foundLike) {
-    //         return {
-    //             status: ResultStatus.NotFound,
-    //             errorMessage: "Like not found",
-    //             extensions: [{
-    //                 field: "CommentId",
-    //                 message: "Like not found"
-    //             }],
-    //             data: commentsFinalMapperWithCount(foundComment.data!, defaultCount)
-    //         }
-    //     }
-    //
-    //
-    //     // const foundLike: LikeDocument | null = await this.commentsRepository.findLike(userId, commentId)
-    //     // if (!foundLike) {
-    //     //     return {
-    //     //         status: ResultStatus.NotFound,
-    //     //         errorMessage: "Like not found",
-    //     //         extensions: [{
-    //     //             field: "userId and commentId",
-    //     //             message: "Like not found"
-    //     //         }],
-    //     //         data:commentsFinalMapperWithCount(foundComment.data!, defaultCount)
-    //     //     }
-    //     // }
-    //     // const foundLikeCounter = await this.commentsRepository.findLikeInComment(commentId, userId!);
-    //     // if (!foundLikeCounter) {
-    //     //     return {
-    //     //         status: ResultStatus.NotFound,
-    //     //         errorMessage: "Like not found",
-    //     //         extensions: [{
-    //     //             field: "Like",
-    //     //             message: "Like not found"
-    //     //         }],
-    //     //         data: null
-    //     //
-    //     //     }
-    //     // }
-    //     // const final = commentsFinalMapperWithCount(foundComment.data!, foundLikeCounter);
-    //     return {
-    //         status: ResultStatus.Success,
-    //         extensions: [],
-    //         data: final
-    //     }
-    // }
-
-
     async findCommentById(commentId: string): Promise<ObjectResult<CommentDocument | null>> {
         const foundComment: CommentDocument | null = await this.commentsRepository.findById(commentId);
         if (!foundComment) {
@@ -99,7 +33,6 @@ export class CommentsService {
                 data: null
             }
         }
-
         return {
             status: ResultStatus.Success,
             extensions: [],
@@ -120,7 +53,6 @@ export class CommentsService {
                 data: null
             }
         }
-
         const newComment = new CommentModel()
         newComment.content = body.content
         newComment.postId = postId;
@@ -128,7 +60,6 @@ export class CommentsService {
         newComment.commentatorInfo.userLogin = userLogin;
         newComment.createdAt = new Date();
         const createdCommentId = await this.commentsRepository.save(newComment);
-
         return {
             status: ResultStatus.Created,
             extensions: [],
@@ -159,11 +90,9 @@ export class CommentsService {
                 }],
                 data: null
             }
-
         const updatedComment = new CommentModel(foundComment)
         updatedComment.content = body.content;
         await this.commentsRepository.save(updatedComment)
-
         return {
             status: ResultStatus.NoContent,
             extensions: [],
@@ -204,7 +133,6 @@ export class CommentsService {
     }
 
     async setLikeStatus(commentId: string, userId: string, likeStatus: LikeDislikeStatus): Promise<ObjectResult<null>> {
-
         const foundComment = await this.findCommentById(commentId);
         if (foundComment.status !== "Success") {
             return {
@@ -218,14 +146,12 @@ export class CommentsService {
             }
         }
         const foundLike = await this.findLikeByUserIdAndCommentId(userId, commentId)
-
         if (foundLike.status !== "Success") {
             const newLike = new LikeModel()
             newLike.userId = userId
             newLike.commentId = commentId
             newLike.status = likeStatus
             await this.commentsRepository.saveLikeStatus(newLike)
-
             return {
                 status: ResultStatus.NoContent,
                 extensions: [],

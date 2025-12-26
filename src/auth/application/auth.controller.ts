@@ -7,10 +7,6 @@ import {UserInputDto} from "../../users/types/userInputDto";
 import {AuthService} from "./auth.service";
 
 
-
-
-
-
 @injectable()
 export class AuthController {
 

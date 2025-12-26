@@ -14,7 +14,6 @@ import {SessionsService} from "../../securityDevices/application/sessions.servic
 
 const jwtService = container.get(JwtService)
 const sessionsService = container.get(SessionsService);
-
 export const refreshTokenMiddleware = async (req: Request, res: Response, next: NextFunction) => {
     const refreshToken = req.cookies.refreshToken as string;
     if (!refreshToken) {

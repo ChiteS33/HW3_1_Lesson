@@ -9,7 +9,6 @@ export const checkRequestCounterMiddleware = async (req: Request, res: Response,
     const iat = new Date()
     const tenSeconds = new Date(iat.getTime() - 10000)
 
-
     const resultForCollection = (ip: string, url: string, iat: Date): RequestCounter => {
         return {
             ip: ip,
@@ -18,7 +17,6 @@ export const checkRequestCounterMiddleware = async (req: Request, res: Response,
         }
     }
     const info = resultForCollection(ip, url, iat)
-
     const foundSessions = await RequestCounterModel.find(
         {
             ip: ip,
@@ -30,8 +28,6 @@ export const checkRequestCounterMiddleware = async (req: Request, res: Response,
         res.status(429).send("Too much requests per 10s")
         return
     }
-
-
     next()
 }
 

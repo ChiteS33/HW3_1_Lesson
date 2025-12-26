@@ -200,11 +200,9 @@ export class AuthService {
         const token = await this.jwtService.createJWT(userId);
         const refreshToken = await this.jwtService.createRefreshToken(userId)
         const payload: Payload = await this.jwtService.decodeJWT(refreshToken)
-
         const newSession = new SessionModel()
         newSession.userId = payload.userId
         newSession.deviceId = payload.deviceId
-
         newSession.iat = new Date(payload.iat * 1000)
         newSession.deviceName = deviceName
         newSession.ip = ip
@@ -235,7 +233,6 @@ export class AuthService {
         newSession.iat = new Date(newIat * 1000)
         newSession.exp = new Date(newExp * 1000)
         await this.sessionsRepository.save(newSession)
-
         return {
             status: ResultStatus.Success,
             extensions: [],
@@ -265,7 +262,6 @@ export class AuthService {
     }
 
     async passRecovery(email: string): Promise<ObjectResult<null>> {
-
         const foundEmail: UserDocument | null = await this.usersRepository.findByEmail(email)
         if (!foundEmail) return {
             status: ResultStatus.NotFound,

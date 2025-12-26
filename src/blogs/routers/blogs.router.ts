@@ -42,6 +42,6 @@ blogsRouter
         idValidation,
         inputValidationResultMiddleware,
         blogsController.deleteBlog.bind(blogsController)
-    )                                                                                                                    //
+    )
 
 

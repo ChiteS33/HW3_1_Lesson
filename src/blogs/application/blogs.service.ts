@@ -39,7 +39,6 @@ export class BlogsService {
         newBlog.createdAt = new Date()
         newBlog.isMembership = false
         const createdBlogId = await this.blogsRepository.save(newBlog);
-
         return {
             status: ResultStatus.Created,
             extensions: [],

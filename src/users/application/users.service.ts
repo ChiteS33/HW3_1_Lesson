@@ -17,7 +17,6 @@ export class UsersService {
 
     async findUserById(id: string): Promise<ObjectResult<UserDocument | null>> {
         const foundUser: UserDocument | null = await this.usersRepository.findById(id);
-
         if (!foundUser) {
             return {
                 status: ResultStatus.NotFound,
@@ -37,9 +36,7 @@ export class UsersService {
     }
 
     async create(inputInfo: UserInputDto): Promise<ObjectResult<null | string>> {
-
         const oldUserByEmail = await this.usersRepository.findByEmail(inputInfo.email);
-
         if (oldUserByEmail) {
             return {
                 status: ResultStatus.BadRequest,
@@ -51,9 +48,7 @@ export class UsersService {
                 data: null
             }
         }
-
         const oldUserByLogin = await this.usersRepository.findByName(inputInfo.login);
-
         if (oldUserByLogin) {
             return {
                 status: ResultStatus.BadRequest,
@@ -76,10 +71,7 @@ export class UsersService {
             expirationDate: new Date(),
             isConfirmed: true
         }
-
-
         const createdUserId = await this.usersRepository.save(newUser);
-
         return {
             status: ResultStatus.Created,
             extensions: [],

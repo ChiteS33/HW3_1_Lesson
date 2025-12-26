@@ -8,9 +8,7 @@ export class PostsRepository {
 
 
     async save(post: PostDocument): Promise<string> {
-
         const savedPost: PostDocument = await post.save()
-
         return savedPost._id.toString();
     }
 

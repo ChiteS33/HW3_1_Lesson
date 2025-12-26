@@ -8,7 +8,6 @@ import {SessionsRepository} from "../repositories/sessions.repository";
 import "reflect-metadata"
 
 
-
 @injectable()
 export class SessionsService {
 
@@ -43,7 +42,6 @@ export class SessionsService {
 
     async createSession(session: SessionDocument): Promise<ObjectResult<string>> {
         const sessionId: string = await this.sessionsRepository.save(session)
-
         return {
             status: ResultStatus.Created,
             extensions: [],

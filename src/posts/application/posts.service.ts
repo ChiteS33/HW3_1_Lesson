@@ -9,7 +9,6 @@ import {PostDocument, PostModel} from "../routes/posts.entity";
 import "reflect-metadata"
 
 
-
 @injectable()
 export class PostsService {
 

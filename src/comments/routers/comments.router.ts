@@ -7,6 +7,7 @@ import {container} from "../../composition-root";
 import "reflect-metadata";
 import {CommentsController} from "../application/comments.controller";
 import {authorizationForCommentWitLike} from "../../auth/middlewares/authorizationForCommentWithLike.middleware";
+import {likeValidation} from "../../common/validation/likeStatusValidation";
 
 
 
@@ -20,4 +21,4 @@ commentsRouter
     .put('/:id', authorizationMiddleware, idValidation, commentInputDtoValidation, inputValidationResultMiddleware, commentsController.updateComment.bind(commentsController))
     .delete('/:id', authorizationMiddleware, idValidation, inputValidationResultMiddleware, commentsController.deleteComment.bind(commentsController))
 
-.put('/:id/like-status', authorizationMiddleware, inputValidationResultMiddleware, commentsController.createLikeForComment.bind(commentsController))
+.put('/:id/like-status', likeValidation, authorizationMiddleware, inputValidationResultMiddleware, commentsController.createLikeForComment.bind(commentsController))

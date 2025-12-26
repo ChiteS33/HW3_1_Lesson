@@ -15,7 +15,6 @@ import {BlogDocument} from "../routers/blogs.entity";
 import "reflect-metadata"
 
 
-
 @injectable()
 export class BlogsController {
 

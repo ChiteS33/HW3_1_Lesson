@@ -25,26 +25,21 @@ export class PostsController {
 
 
     async createComment(req: Request, res: Response) {
-
         const user = req.user!
         const userId = req.user!._id.toString();
         const postId = req.params.id;
         const content: CommentInPut = req.body;
-        const commentId = await this.commentsService.createComment(user.login, user._id.toString(), content, postId);
+        const commentId = await this.commentsService.createComment(user.login, userId, content, postId);
         if (commentId.status !== ResultStatus.Created) {
             return res.sendStatus(resultCodeToHttpException(commentId.status))
         }
         const comment = await this.commentsQueryRepository.findByCommentId(commentId.data!, userId);
-        if (comment.status !== ResultStatus.Success) {
-            return res.sendStatus(resultCodeToHttpException(commentId.status))
-        }
         return res.status(resultCodeToHttpException(ResultStatus.Created)).send(comment.data);
     }
 
     async createPost(req: Request, res: Response) {
         const body = req.body;
         const createdPostId = await this.postsService.createPost(body);
-
         if (!createdPostId.data) {
             return res.sendStatus(resultCodeToHttpException(createdPostId.status));
         }
@@ -62,9 +57,10 @@ export class PostsController {
     }
 
     async getCommentsByPostId(req: Request, res: Response) {
+        const userId = req.user?._id ? req.user._id.toString() : null;
         const postId = req.params.id;
         const query: InPutPagination = req.query;
-        const comments = await this.commentsQueryRepository.findByPostId(postId, query);
+        const comments = await this.commentsQueryRepository.findByPostId(postId, query, userId!);
         if (comments.status !== ResultStatus.Success) {
             return res.sendStatus(resultCodeToHttpException(comments.status));
         }

@@ -29,23 +29,6 @@ export class CommentsRepository {
         return LikeModel.findOne({commentId, userId});
     }
 
-    async findLikeInComment(commentId: string, userId: string): Promise<{
-        totalCountLike: number;
-        totalCountDislike: number;
-        userStatus: string
-    } | null> {
-
-        const totalCountLike = await LikeModel.countDocuments({commentId: commentId, status: "Like"})
-        const totalCountDislike = await LikeModel.countDocuments({commentId: commentId, status: "Dislike"})
-        const foundLike: LikeDocument | null = await LikeModel.findOne({userId: userId})
-        if(!foundLike) return null;
-
-        return {
-            totalCountLike: totalCountLike,
-            totalCountDislike: totalCountDislike,
-            userStatus: foundLike.status
-        }
-    }
 
 }
 

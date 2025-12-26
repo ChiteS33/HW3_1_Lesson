@@ -23,7 +23,6 @@ export class PostsQueryRepository {
         const sort = {[pagination.sortBy]: pagination.sortDirection}
         const preFinishValues: PostDocument[] = await PostModel.find().skip(skip).limit(limit).sort(sort)
         const totalCount = await PostModel.countDocuments()
-
         const addValuesForFront = {
             pagesCount: Math.ceil(totalCount / pagination.pageSize),
             page: pagination.pageNumber,

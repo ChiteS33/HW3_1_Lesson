@@ -10,8 +10,6 @@ import {SessionsService} from "./sessions.service";
 import "reflect-metadata"
 
 
-
-
 @injectable()
 export class SessionsController {
 
@@ -37,7 +35,6 @@ export class SessionsController {
     async deleteAllExcludeCurrent(req: Request, res: Response) {
         const refreshToken = req.cookies.refreshToken;
         const result = await this.sessionsService.deleteAllExcludeCurrentUser(refreshToken);
-
         return res.sendStatus(resultCodeToHttpException(result.status));
     }
 

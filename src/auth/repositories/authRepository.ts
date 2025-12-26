@@ -23,7 +23,6 @@ export class AuthRepository {
     }
 
     async changePassword(userId: string, newHash: string): Promise<void> {
-
         await RecoveryPassModel.updateOne(
             {_id: userId},
             {

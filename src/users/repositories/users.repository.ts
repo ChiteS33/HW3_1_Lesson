@@ -8,14 +8,12 @@ export class UsersRepository {
 
 
     async save(user: UserDocument): Promise<string> {
-
         const savedUser: UserDocument = await user.save();
         return savedUser._id.toString();
     }
 
     async findById(id: string): Promise<UserDocument | null> {
         return UserModel.findOne({_id: id});
-
     }
 
     async delete(id: string): Promise<void> {
@@ -28,12 +26,9 @@ export class UsersRepository {
 
     async findByEmail(email: string): Promise<UserDocument | null> {
         return UserModel.findOne({email: email})
-
-
     }
 
     async findByLoginOrEmail(loginOrEmail: string): Promise<UserDocument | null> {
-
         return UserModel.findOne({
             $or: [{email: loginOrEmail}, {login: loginOrEmail}]
         });

@@ -1,5 +1,4 @@
 import {BlogOutPut} from "../../types/blogOutPut";
-
 import {FinalWithPagination} from "../../../common/types/finalWithPagination";
 import {OutPutPagination} from "../../../common/types/outputPagination";
 
