@@ -1,4 +1,4 @@
-import {PostDocument, PostModel} from "../routes/posts.entity";
+import {LikeDocumentForPost, LikeModelForPost, PostDocument, PostModel} from "../routes/posts.entity";
 import "reflect-metadata"
 import {injectable} from "inversify";
 
@@ -21,5 +21,13 @@ export class PostsRepository {
         return
     }
 
+    async saveLike(like: LikeDocumentForPost): Promise<string> {
+        const result = await like.save();
+        return result._id.toString();
+    }
+
+    async findLikeByPostId(postId: string, userId: string): Promise<LikeDocumentForPost | null> {
+        return LikeModelForPost.findOne({postId, userId});
+    }
 
 }

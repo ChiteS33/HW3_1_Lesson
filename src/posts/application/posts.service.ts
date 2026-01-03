@@ -1,12 +1,12 @@
 import {PostInputDto} from "../types/post-input.dto";
 import {PostInputDtoForBlog} from "../types/postInBlog";
 import {ObjectResult, ResultStatus} from "../../common/types/objectResultTypes";
-import {WithId} from "mongodb";
 import {BlogsService} from "../../blogs/application/blogs.service";
 import {PostsRepository} from "../repositories/postsRepository";
 import {inject, injectable} from "inversify";
-import {PostDocument, PostModel} from "../routes/posts.entity";
+import {LikeDocumentForPost, LikeModelForPost, PostDocument, PostModel} from "../routes/posts.entity";
 import "reflect-metadata"
+import {LikeDislikeStatus} from "../../comments/routers/comments.entity";
 
 
 @injectable()
@@ -17,9 +17,9 @@ export class PostsService {
     }
 
 
-    async findById(id: string): Promise<ObjectResult<WithId<PostDocument> | null>> {
-        const result: PostDocument | null = await this.postsRepository.findById(id);
-        if (!result) {
+    async findPostById(id: string): Promise<ObjectResult<PostDocument | null>> {
+        const foundPost: PostDocument | null = await this.postsRepository.findById(id);
+        if (!foundPost) {
             return {
                 status: ResultStatus.NotFound,
                 errorMessage: "Post not found",
@@ -33,7 +33,7 @@ export class PostsService {
         return {
             status: ResultStatus.Success,
             extensions: [],
-            data: result
+            data: foundPost
         }
     }
 
@@ -66,8 +66,8 @@ export class PostsService {
         }
     }
 
-    async update(postId: string, body: PostInputDto): Promise<ObjectResult<string | null>> {
-        const post = await this.findById(postId);
+    async updatePost(postId: string, body: PostInputDto): Promise<ObjectResult<string | null>> {
+        const post = await this.findPostById(postId);
         if (!post.data) {
             return {
                 status: ResultStatus.NotFound,
@@ -105,8 +105,8 @@ export class PostsService {
         }
     }
 
-    async delete(postId: string): Promise<ObjectResult<null>> {
-        const post = await this.findById(postId);
+    async deletePost(postId: string): Promise<ObjectResult<null>> {
+        const post = await this.findPostById(postId);
         if (!post.data) {
             return {
                 status: ResultStatus.NotFound,
@@ -153,6 +153,67 @@ export class PostsService {
             extensions: [],
             data: newPostId
         }
+    }
+
+    async setLikeStatus(postId: string, userId: string, likeStatus: LikeDislikeStatus, userLogin: string): Promise<ObjectResult<null>> {
+
+        const foundPost = await this.findPostById(postId);
+        if (foundPost.status !== "Success") {
+            return {
+                status: ResultStatus.NotFound,
+                errorMessage: "Post not found",
+                extensions: [{
+                    field: "postId",
+                    message: "Post not found"
+                }],
+                data: null
+            }
+        }
+               const foundLike = await this.findLikeByUserIdAndPostId(userId, postId);
+        if (foundLike.status !== "Success") {
+            const newLike = new LikeModelForPost()
+            newLike.userId = userId
+            newLike.login = userLogin
+            newLike.postId = postId
+            newLike.status = likeStatus
+            newLike.data = new Date()
+
+            await this.postsRepository.saveLike(newLike)
+            return {
+                status: ResultStatus.NoContent,
+                extensions: [],
+                data: null
+            }
+        }
+        foundLike.data!.status = likeStatus
+        await this.postsRepository.saveLike(foundLike.data!)
+        return {
+            status: ResultStatus.NoContent,
+            extensions: [],
+            data: null
+        }
+
+    }
+
+    async findLikeByUserIdAndPostId(userId: string, postId: string): Promise<ObjectResult<LikeDocumentForPost | null>> {
+        const foundLike: LikeDocumentForPost | null = await this.postsRepository.findLikeByPostId(postId, userId);
+        if (!foundLike) {
+            return {
+                status: ResultStatus.NotFound,
+                errorMessage: "Like not found",
+                extensions: [{
+                    field: "Like",
+                    message: "Like not found"
+                }],
+                data: null
+            }
+        }
+        return {
+            status: ResultStatus.Success,
+            extensions: [],
+            data: foundLike
+        }
+
     }
 
 }

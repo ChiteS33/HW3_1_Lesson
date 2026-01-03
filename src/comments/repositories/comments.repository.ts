@@ -11,7 +11,7 @@ export class CommentsRepository {
         return savedComment._id.toString();
     }
 
-    async findById(id: string): Promise<CommentDocument | null> {
+    async findCommentById(id: string): Promise<CommentDocument | null> {
         return CommentModel.findOne({_id: id});
     }
 

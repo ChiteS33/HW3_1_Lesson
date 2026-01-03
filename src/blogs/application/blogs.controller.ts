@@ -43,7 +43,7 @@ export class BlogsController {
         if (createResult.status !== "Created") {
             return res.sendStatus(resultCodeToHttpException(createResult.status));
         }
-        const createdPost: ObjectResult<PostOutPut | null> = await this.postsQueryRepository.findById(createResult.data!)
+        const createdPost: ObjectResult<PostOutPut | null> = await this.postsQueryRepository.findPostById(createResult.data!)
         if (createdPost.status !== "Success") {
             return res.sendStatus(resultCodeToHttpException(createResult.status));
         }

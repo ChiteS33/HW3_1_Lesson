@@ -21,7 +21,7 @@ export class CommentsQueryRepository {
     }
 
 
-    async findByCommentId(commentId: string, userId: string): Promise<ObjectResult<CommentOutPut | null>> {
+    async findCommentById(commentId: string, userId: string): Promise<ObjectResult<CommentOutPut | null>> {
         const totalCountLike = await LikeModel.countDocuments({commentId: commentId, status: "Like"})
         const totalCountDislike = await LikeModel.countDocuments({commentId: commentId, status: "Dislike"})
         let myStatus = "None"
@@ -62,8 +62,8 @@ export class CommentsQueryRepository {
         }
     }
 
-    async findByPostId(postId: string, query: InPutPagination, userId: string): Promise<ObjectResult<FinalWithPagination<CommentOutPut> | null>> {
-        const result = await this.postsService.findById(postId);
+    async findCommentByPostId(postId: string, query: InPutPagination, userId: string): Promise<ObjectResult<FinalWithPagination<CommentOutPut> | null>> {
+        const result = await this.postsService.findPostById(postId);
         if (!result.data) {
             return {
                 status: ResultStatus.NotFound,
@@ -92,8 +92,9 @@ export class CommentsQueryRepository {
                 data: null
             }
         }
+
         const mappedCommentsPromises = comments.map((comment) => {
-            return this.findByCommentId(comment._id.toString(), userId)
+            return this.findCommentById(comment._id.toString(), userId)
         })
         const mappedComments = await Promise.all(mappedCommentsPromises)
         const commentsWithLikes = mappedComments.map((comment) => {

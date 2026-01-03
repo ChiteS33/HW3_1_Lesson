@@ -21,7 +21,7 @@ export class CommentsService {
 
 
     async findCommentById(commentId: string): Promise<ObjectResult<CommentDocument | null>> {
-        const foundComment: CommentDocument | null = await this.commentsRepository.findById(commentId);
+        const foundComment: CommentDocument | null = await this.commentsRepository.findCommentById(commentId);
         if (!foundComment) {
             return {
                 status: ResultStatus.NotFound,
@@ -41,7 +41,7 @@ export class CommentsService {
     }
 
     async createComment(userLogin: string, userId: string, body: CommentInPut, postId: string): Promise<ObjectResult<string | null>> {
-        const foundPost: ObjectResult<PostDocument | null> = await this.postsService.findById(postId);
+        const foundPost: ObjectResult<PostDocument | null> = await this.postsService.findPostById(postId);
         if (!foundPost.data) {
             return {
                 status: ResultStatus.NotFound,

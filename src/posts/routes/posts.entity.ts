@@ -1,5 +1,6 @@
 
-import mongoose, {HydratedDocument, model, Model, Schema} from "mongoose";
+import mongoose, {HydratedDocument, model, Model} from "mongoose";
+import {LikeDislikeStatus} from "../../comments/routers/comments.entity";
 
 
 
@@ -25,3 +26,30 @@ type PostModel = Model<PostInDb>
 export type PostDocument = HydratedDocument<PostInDb>
 
 export const PostModel = model<PostInDb, PostModel>("Posts", postSchema)
+
+
+
+
+
+export type LikeInDbForPost = {
+    userId: string,
+    login: string,
+    postId: string,
+    status: LikeDislikeStatus,
+    data: Date
+
+}
+
+const likeOrDislikeSchemaForPost = new mongoose.Schema<LikeInDbForPost>({
+    userId: {type: String, required: true},
+    login: {type: String, required: true},
+    postId: {type: String, required: true},
+    status:{type: String, required: true, enum: LikeDislikeStatus},
+    data:{type: Date, required: true},
+})
+
+type LikeModel = Model<LikeInDbForPost>
+
+export type LikeDocumentForPost = HydratedDocument<LikeInDbForPost>
+
+export const LikeModelForPost = model<LikeInDbForPost, LikeModel>("Likes for post", likeOrDislikeSchemaForPost)

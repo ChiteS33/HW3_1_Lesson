@@ -28,3 +28,4 @@ authRouter
 
     .post('/password-recovery', checkRequestCounterMiddleware, emailValidationForRecovery, inputValidationResultMiddleware, authController.passRecovery.bind(authController))
     .post('/new-password', checkRequestCounterMiddleware, passAndCodeValidation, inputValidationResultMiddleware, authController.confirmPassRecovery.bind(authController))
+

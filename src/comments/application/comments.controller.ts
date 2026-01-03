@@ -25,7 +25,7 @@ export class CommentsController {
     async getCommentById(req: Request, res: Response) {
         const commentId = req.params.id;
         const userId = req.user?._id ? req.user._id.toString() : null;
-        const comment = await this.commentsQueryRepository.findByCommentId(commentId, userId!);
+        const comment = await this.commentsQueryRepository.findCommentById(commentId, userId!);
         if (comment.status !== "Success") {
             return res.sendStatus(resultCodeToHttpException(comment.status));
         }

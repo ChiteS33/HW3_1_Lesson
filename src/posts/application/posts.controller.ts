@@ -33,7 +33,7 @@ export class PostsController {
         if (commentId.status !== ResultStatus.Created) {
             return res.sendStatus(resultCodeToHttpException(commentId.status))
         }
-        const comment = await this.commentsQueryRepository.findByCommentId(commentId.data!, userId);
+        const comment = await this.commentsQueryRepository.findCommentById(commentId.data!, userId);
         return res.status(resultCodeToHttpException(ResultStatus.Created)).send(comment.data);
     }
 
@@ -43,7 +43,7 @@ export class PostsController {
         if (!createdPostId.data) {
             return res.sendStatus(resultCodeToHttpException(createdPostId.status));
         }
-        const createdPost = await this.postsQueryRepository.findById(createdPostId.data!);
+        const createdPost = await this.postsQueryRepository.findPostById(createdPostId.data!);
         if (createdPost.status !== ResultStatus.Success) {
             return res.sendStatus(resultCodeToHttpException(createdPost.status));
         }
@@ -52,7 +52,7 @@ export class PostsController {
 
     async deletePost(req: Request, res: Response) {
         const postId = req.params.id;
-        const result = await this.postsService.delete(postId)
+        const result = await this.postsService.deletePost(postId)
         return res.sendStatus(resultCodeToHttpException(result.status));
     }
 
@@ -60,16 +60,16 @@ export class PostsController {
         const userId = req.user?._id ? req.user._id.toString() : null;
         const postId = req.params.id;
         const query: InPutPagination = req.query;
-        const comments = await this.commentsQueryRepository.findByPostId(postId, query, userId!);
+        const comments = await this.commentsQueryRepository.findCommentByPostId(postId, query, userId!);
         if (comments.status !== ResultStatus.Success) {
             return res.sendStatus(resultCodeToHttpException(comments.status));
         }
         return res.status(resultCodeToHttpException(comments.status)).send(comments.data);
     }
 
-    async getPost(req: Request, res: Response) {
+    async getPostByID(req: Request, res: Response) {
         const postId = req.params.id;
-        const foundPost = await this.postsQueryRepository.findById(postId);
+        const foundPost = await this.postsQueryRepository.findPostById(postId);
         if (foundPost.status !== ResultStatus.Success) {
             return res.sendStatus(resultCodeToHttpException(foundPost.status));
         }
@@ -88,7 +88,22 @@ export class PostsController {
     async updatePost(req: Request, res: Response) {
         const postId: string = req.params.id;
         const body: PostInputDto = req.body;
-        const result = await this.postsService.update(postId, body);
+        const result = await this.postsService.updatePost(postId, body);
         return res.sendStatus(resultCodeToHttpException(result.status))
     }
+
+    async createLikeForPost(req: Request, res: Response) {
+
+        const userLogin = req.user!.login;
+        const postId = req.params.id;
+        const likeStatus = req.body.likeStatus;
+        const userId = req.user!._id.toString();
+        const result = await this.postsService.setLikeStatus(postId, userId, likeStatus, userLogin);
+
+        if (result.status !== "NoContent") {
+            return res.status(resultCodeToHttpException(result.status)).send({errorMessages: result.extensions})
+        }
+        return res.sendStatus(resultCodeToHttpException(result.status))
+    }
+
 }
