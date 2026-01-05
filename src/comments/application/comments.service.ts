@@ -53,12 +53,7 @@ export class CommentsService {
                 data: null
             }
         }
-        const newComment = new CommentModel()
-        newComment.content = body.content
-        newComment.postId = postId;
-        newComment.commentatorInfo.userId = userId;
-        newComment.commentatorInfo.userLogin = userLogin;
-        newComment.createdAt = new Date();
+        const newComment = CommentModel.createComment(userLogin,userId, body, postId)
         const createdCommentId = await this.commentsRepository.save(newComment);
         return {
             status: ResultStatus.Created,
@@ -90,9 +85,9 @@ export class CommentsService {
                 }],
                 data: null
             }
-        const updatedComment = new CommentModel(foundComment)
-        updatedComment.content = body.content;
-        await this.commentsRepository.save(updatedComment)
+
+        foundComment.data!.updateComment(foundComment.data!,body)
+        await this.commentsRepository.save(foundComment.data!)
         return {
             status: ResultStatus.NoContent,
             extensions: [],

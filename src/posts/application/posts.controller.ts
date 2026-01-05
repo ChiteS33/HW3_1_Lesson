@@ -25,10 +25,12 @@ export class PostsController {
 
 
     async createComment(req: Request, res: Response) {
+
         const user = req.user!
         const userId = req.user!._id.toString();
         const postId = req.params.id;
         const content: CommentInPut = req.body;
+
         const commentId = await this.commentsService.createComment(user.login, userId, content, postId);
         if (commentId.status !== ResultStatus.Created) {
             return res.sendStatus(resultCodeToHttpException(commentId.status))
