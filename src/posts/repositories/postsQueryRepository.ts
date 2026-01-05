@@ -1,4 +1,3 @@
-import {outPutPostMapper} from "../routes/mappers/outPutPostMapper";
 import {outPutPaginationPostMapper} from "../routes/mappers/postFinalMapper";
 import {PostOutPut} from "../types/postOutPut";
 import {PaginationForRepo} from "../../common/types/paginationForRepo";
@@ -15,14 +14,15 @@ import {injectable} from "inversify";
 export class PostsQueryRepository {
 
 
-    async findAll(query: InPutPagination): Promise<ObjectResult<FinalWithPagination<PostOutPut>>> {
+    async findAll(query: InPutPagination, userId?: string): Promise<ObjectResult<FinalWithPagination<PostOutPut>>> {
+
         const pagination: PaginationForRepo = valuesPaginationMaker(query)
         const limit = pagination.pageSize
         const skip = (pagination.pageSize * pagination.pageNumber) - pagination.pageSize
         const sort = {[pagination.sortBy]: pagination.sortDirection}
         const foundedPosts: PostDocument[] = await PostModel.find().skip(skip).limit(limit).sort(sort)
         const mappedPostsPromises = foundedPosts.map((post) => {
-            return this.findPostById(post._id.toString())
+            return this.findPostById(post._id.toString(), userId)
         })
         const mappedPosts = await Promise.all(mappedPostsPromises)
         const postsWithLikes = mappedPosts.map((post) => {
@@ -37,7 +37,6 @@ export class PostsQueryRepository {
             totalCount: totalCount,
         }
 
-        const postForFront: PostOutPut[] = foundedPosts.map(outPutPostMapper)
         return {
             status: ResultStatus.Success,
             extensions: [],
@@ -45,12 +44,16 @@ export class PostsQueryRepository {
         }
     }
 
-    async findPostById(postId: string): Promise<ObjectResult<PostOutPut | null>> {
+    async findPostById(postId: string, userId?: string): Promise<ObjectResult<PostOutPut | null>> {
         const totalCountLike = await LikeModelForPost.countDocuments({postId: postId, status: "Like"})
         const totalCountDislike = await LikeModelForPost.countDocuments({postId: postId, status: "Dislike"})
         let myStatus = "None"
-        const counter = {totalCountLike, totalCountDislike, myStatus}
         const foundPost: PostDocument | null = await PostModel.findOne({_id: postId})
+        const newestLikesForPost = await LikeModelForPost
+            .find({postId, status: "Like"})
+            .sort({data: -1})
+            .limit(3)
+
         if (!foundPost) {
             return {
                 status: ResultStatus.NotFound,
@@ -62,46 +65,71 @@ export class PostsQueryRepository {
                 data: null
             }
         }
-        const newestLikesForPost = await LikeModelForPost
-            .find({postId, status: "Like"})
-            .sort({data: -1})
-            .limit(3)
-
-
+        if (userId === null) {
+            return {
+                status: ResultStatus.Success,
+                extensions: [],
+                data: outPutMapperForPostWithNewestLikes(foundPost, totalCountLike, totalCountDislike, myStatus, newestLikesForPost)
+            }
+        }
+        const foundLikeForPost = await LikeModelForPost.findOne({postId, userId})
+        if (!foundLikeForPost) {
+            return {
+                status: ResultStatus.Success,
+                errorMessage: "Like not found",
+                extensions: [{
+                    field: "postId",
+                    message: "Like not found"
+                }],
+                data: outPutMapperForPostWithNewestLikes(foundPost, totalCountLike, totalCountDislike, myStatus, newestLikesForPost)
+            }
+        }
+        myStatus = foundLikeForPost.status
         return {
             status: ResultStatus.Success,
             extensions: [],
-            data: outPutMapperForPostWithNewestLikes(foundPost, counter, newestLikesForPost)
+            data: outPutMapperForPostWithNewestLikes(foundPost, totalCountLike, totalCountDislike, myStatus, newestLikesForPost)
         }
     }
 
-    async findPostsByBlogId(id: string, query: InPutPagination): Promise<ObjectResult<FinalWithPagination<PostOutPut>>> {
+    async findPostsByBlogId(id: string, query: InPutPagination, userId?: string): Promise<ObjectResult<FinalWithPagination<PostOutPut>>> {
+
         const pagination: PaginationForRepo = valuesPaginationMaker(query)
         const limit = pagination.pageSize
         const skip = (pagination.pageSize * pagination.pageNumber) - pagination.pageSize;
         const sorting = {
             [pagination.sortBy]: pagination.sortDirection,
         }
-        const posts: PostDocument[] = await PostModel.find({blogId: id}).skip(skip).limit(limit).sort(sorting);
+        const foundPosts: PostDocument[] = await PostModel.find({blogId: id}).skip(skip).limit(limit).sort(sorting);
+
+        const mappedPostsPromises = foundPosts.map((post) => {
+            return this.findPostById(post._id.toString(), userId)
+        })
+        const mappedPosts = await Promise.all(mappedPostsPromises)
+        const postsWithLikes = mappedPosts.map((post) => {
+            return post.data!
+        })
+
         const totalCount = await PostModel.countDocuments({blogId: id})
-        const addValuesForFront = {
+        const paginationForFront = {
             pagesCount: Math.ceil(totalCount / pagination.pageSize),
             page: pagination.pageNumber,
             pageSize: limit,
             totalCount: totalCount,
         }
-        const postsForFront: PostOutPut[] = posts.map(outPutPostMapper)
+        console.log(postsWithLikes)
+        // const postsForFront: PostOutPut[] = foundPosts.map(outPutPostMapper
         return {
             status: ResultStatus.Success,
             extensions: [],
-            data: outPutPaginationPostMapper(postsForFront, addValuesForFront)
+            data: outPutPaginationPostMapper(postsWithLikes, paginationForFront)
         }
     }
 
 
 }
 
-export const outPutMapperForPostWithNewestLikes = (post: PostDocument, counter: any, newestLikesForPost: LikeInDbForPost[]): any => {
+export const outPutMapperForPostWithNewestLikes = (post: PostDocument, totalCountLike: any, totalCountDislike: any, status: string, newestLikesForPost: LikeInDbForPost[]): any => {
 
     return {
         id: post._id.toString(),
@@ -112,9 +140,9 @@ export const outPutMapperForPostWithNewestLikes = (post: PostDocument, counter: 
         blogName: post.blogName,
         createdAt: post.createdAt.toISOString(),
         extendedLikesInfo: {
-            likesCount: counter.totalCountLike,
-            dislikesCount: counter.totalCountDislike,
-            myStatus: counter.myStatus,
+            likesCount: totalCountLike,
+            dislikesCount: totalCountDislike,
+            myStatus: status,
 
             newestLikes: newestLikesForPost.map(like => ({
                 addedAt: like.data.toISOString(),

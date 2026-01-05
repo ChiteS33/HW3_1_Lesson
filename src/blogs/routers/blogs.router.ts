@@ -9,6 +9,7 @@ import {paginationValidation} from "../../common/validation/paginationValidation
 import {container} from "../../composition-root";
 import {BlogsController} from "../application/blogs.controller";
 import "reflect-metadata";
+import {authorizationForCommentWitLike} from "../../auth/middlewares/authorizationForCommentWithLike.middleware";
 
 
 
@@ -19,7 +20,7 @@ export const blogsRouter = Router({});
 blogsRouter
     .get('', paginationValidationWithSearchName, blogsController.getBlogList.bind(blogsController))
     .post('', superAdminGuardMiddleware, blogInputDtoValidation, inputValidationResultMiddleware, blogsController.createBlog.bind(blogsController))
-    .get('/:id/posts', idValidation, paginationValidation, inputValidationResultMiddleware, blogsController.getPostByBlogId.bind(blogsController))
+    .get('/:id/posts', authorizationForCommentWitLike, idValidation, paginationValidation, inputValidationResultMiddleware, blogsController.getPostByBlogId.bind(blogsController))
     .post('/:id/posts',
         superAdminGuardMiddleware,
         idValidation,

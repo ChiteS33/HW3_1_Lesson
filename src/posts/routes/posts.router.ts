@@ -23,10 +23,10 @@ postsRouter
 
     .put('/:id/like-status',likeValidation, authorizationMiddleware, inputValidationResultMiddleware, postsController.createLikeForPost.bind(postsController))
     .get('/:id/comments', authorizationForCommentWitLike, inputValidationResultMiddleware, idValidation, paginationValidation, postsController.getCommentsByPostId.bind(postsController))
-    .post('/:id/comments',authorizationMiddleware, idValidation, commentInputDtoValidation, inputValidationResultMiddleware, postsController.createComment.bind(postsController))
-    .get('', paginationValidation, postsController.getPostList.bind(postsController))
+    .post('/:id/comments',authorizationMiddleware,  idValidation, commentInputDtoValidation, inputValidationResultMiddleware, postsController.createComment.bind(postsController))
+    .get('',authorizationForCommentWitLike, inputValidationResultMiddleware, paginationValidation, postsController.getPostList.bind(postsController))
     .post('', superAdminGuardMiddleware, postInputDtoValidationWithBlogId, inputValidationResultMiddleware, postsController.createPost.bind(postsController))
-    .get('/:id', idValidation, inputValidationResultMiddleware, postsController.getPostByID.bind(postsController))
+    .get('/:id',authorizationForCommentWitLike, idValidation, inputValidationResultMiddleware, postsController.getPostByID.bind(postsController))
     .put('/:id', superAdminGuardMiddleware, idValidation, postInputDtoValidationWithBlogId, inputValidationResultMiddleware, postsController.updatePost.bind(postsController))
     .delete('/:id', superAdminGuardMiddleware, idValidation, inputValidationResultMiddleware, postsController.deletePost.bind(postsController))
 

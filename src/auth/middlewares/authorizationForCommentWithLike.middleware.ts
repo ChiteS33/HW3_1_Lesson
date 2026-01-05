@@ -3,7 +3,6 @@ import {JwtService} from "../../common/service/jwt-service";
 import {UsersService} from "../../users/application/users.service";
 import {NextFunction, Request, Response} from "express";
 import {HttpStatus} from "../../core/types/http-statuses";
-
 const jwtService = container.get(JwtService)
 const usersService = container.get(UsersService);
 

@@ -8,13 +8,12 @@ import {UsersRepository} from "../../users/repositories/users.repository";
 import {HashService} from "../../common/service/bcrypt.service";
 import {JwtService} from "../../common/service/jwt-service";
 import {EmailAdapter} from "../../adapters/email-adapter";
-import {AuthRepository} from "../repositories/authRepository";
 import {UsersService} from "../../users/application/users.service";
 import {UserDocument, UserModel} from "../../users/routes/users.entity";
 import {SessionsService} from "../../securityDevices/application/sessions.service";
 import {SessionsRepository} from "../../securityDevices/repositories/sessions.repository";
 import {SessionModel} from "../../securityDevices/routes/sessions.entity";
-import {RecoveryPassModel} from "../routers/auth.entity";
+
 
 
 @injectable()
@@ -26,7 +25,6 @@ export class AuthService {
                 @inject(EmailAdapter) public emailAdapter: EmailAdapter,
                 @inject(JwtService) public jwtService: JwtService,
                 @inject(SessionsService) public sessionsService: SessionsService,
-                @inject(AuthRepository) public authRepository: AuthRepository,
                 @inject(UsersService) public userService: UsersService,
                 @inject(SessionsRepository) public sessionsRepository: SessionsRepository) {
     }
@@ -63,6 +61,7 @@ export class AuthService {
     }
 
     async createUser(body: UserInputDto): Promise<ObjectResult<null>> {
+        console.log("SADDSADASdd")
         const passwordHash: string = await this.hashService.hashMaker(body.password)
         const user: UserDocument | null = await this.usersRepository.findByLoginOrEmail(body.login)
         if (user) return {
@@ -85,17 +84,10 @@ export class AuthService {
             data: null
         }
 
-        const newUser = new UserModel()
-        newUser.login = body.login
-        newUser.email = body.email
-        newUser.password = passwordHash
-        newUser.createdAt = new Date()
-        newUser.emailConfirmation.confirmationCode = crypto.randomUUID()
-        newUser.emailConfirmation.expirationDate = add(new Date(), {hours: 1})
-        newUser.emailConfirmation.isConfirmed = false
-
+        const newUser = UserModel.createUser({...body, hash: passwordHash})
+console.log(newUser)
         await this.usersRepository.save(newUser)
-        await this.emailAdapter.sendEmail(newUser.email, "ChiteS", newUser.emailConfirmation.confirmationCode)
+        await this.emailAdapter.sendEmail(newUser.email, "ChiteS", newUser.emailConfirmation.confirmationCode!)
         return {
             status: ResultStatus.NoContent,
             extensions: [],
@@ -141,7 +133,10 @@ export class AuthService {
             }],
             data: null
         }
-        user.emailConfirmation.isConfirmed = true
+
+
+        user.confirmationCode(code)
+
         await this.usersRepository.save(user)
 
         return {
@@ -273,10 +268,10 @@ export class AuthService {
             data: null
         }
         const recoveryCode = crypto.randomUUID()
-        const newResult = new RecoveryPassModel()
-        newResult.email = email
-        newResult.recoveryCode = recoveryCode
-        await this.authRepository.save(newResult)
+
+
+        foundEmail.recoveryData.recoveryCode = recoveryCode
+        await this.usersRepository.save(foundEmail)
 
         await this.emailAdapter.resendEmail(email, recoveryCode)
         return {
@@ -287,7 +282,7 @@ export class AuthService {
     }
 
     async confirmRecoveryPass(newPassword: string, recoveryCode: string): Promise<ObjectResult<any>> {
-        const foundEmail = await this.authRepository.findByRecoveryCode(recoveryCode)
+        const foundEmail = await this.usersRepository.findByRecoveryCode(recoveryCode)
         if (!foundEmail) {
             return {
                 status: ResultStatus.NotFound,
@@ -299,21 +294,12 @@ export class AuthService {
                 data: null
             }
         }
-        const foundUser: UserDocument | null = await this.userService.findUserByEmail(foundEmail)
-        if (!foundUser) {
-            return {
-                status: ResultStatus.NotFound,
-                errorMessage: "user not found",
-                extensions: [{
-                    field: "recoveryCode",
-                    message: "user not found"
-                }],
-                data: null
-            }
-        }
+
+
         const newPassHash = await this.hashService.hashMaker(newPassword)
-        await this.authRepository.changePassword(foundUser._id.toString(), newPassHash)
-        await this.authRepository.deleteRecoveryCode(foundEmail)
+        foundEmail.changePass(newPassHash)
+        await this.usersRepository.save(foundEmail)
+
         return {
             status: ResultStatus.NoContent,
             extensions: [],

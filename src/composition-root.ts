@@ -20,7 +20,6 @@ import {CommentsService} from "./comments/application/comments.service";
 import {BlogsQueryRepository} from "./blogs/repositories/blogs.queryRepository";
 import {CommentsController} from "./comments/application/comments.controller";
 import {UsersController} from "./users/application/users.controller";
-import {AuthRepository} from "./auth/repositories/authRepository";
 import {SessionsController} from "./securityDevices/application/sessions.controller";
 import {SessionsService} from "./securityDevices/application/sessions.service";
 import {SessionsRepository} from "./securityDevices/repositories/sessions.repository";
@@ -35,7 +34,7 @@ export const container = new Container();
 
 container.bind(AuthController).to(AuthController);
 container.bind(AuthService).to(AuthService);
-container.bind(AuthRepository).to(AuthRepository);
+
 
 container.bind(BlogsController).to(BlogsController);
 container.bind(BlogsService).to(BlogsService);

@@ -35,7 +35,7 @@ export class UsersService {
         }
     }
 
-    async create(inputInfo: UserInputDto): Promise<ObjectResult<null | string>> {
+    async createUser(inputInfo: UserInputDto): Promise<ObjectResult<null | string>> {
         const oldUserByEmail = await this.usersRepository.findByEmail(inputInfo.email);
         if (oldUserByEmail) {
             return {
@@ -61,16 +61,9 @@ export class UsersService {
             }
         }
         const hash: string = await this.hashService.hashMaker(inputInfo.password)
-        const newUser: UserDocument = new UserModel();
-        newUser.login = inputInfo.login;
-        newUser.password = hash;
-        newUser.email = inputInfo.email;
-        newUser.createdAt = new Date();
-        newUser.emailConfirmation = {
-            confirmationCode: null,
-            expirationDate: new Date(),
-            isConfirmed: true
-        }
+
+
+        const newUser = UserModel.createUserBySa({...inputInfo, hash})
         const createdUserId = await this.usersRepository.save(newUser);
         return {
             status: ResultStatus.Created,
@@ -79,7 +72,7 @@ export class UsersService {
         }
     }
 
-    async delete(userId: string): Promise<ObjectResult<null>> {
+    async deleteUser(userId: string): Promise<ObjectResult<null>> {
         const user = await this.findUserById(userId);
         if (!user) {
             return {

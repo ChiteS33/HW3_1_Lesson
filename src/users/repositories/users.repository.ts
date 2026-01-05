@@ -38,4 +38,8 @@ export class UsersRepository {
         return UserModel.findOne({"emailConfirmation.confirmationCode": code});
     }
 
+    async findByRecoveryCode(code: string): Promise<UserDocument | null> {
+        return UserModel.findOne({[`recoveryData.recoveryCode`]: code})
+          }
+
 }

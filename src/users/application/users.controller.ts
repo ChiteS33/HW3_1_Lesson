@@ -34,7 +34,7 @@ export class UsersController {
 
     async createUser(req: Request, res: Response) {
         const body: UserInputDto = req.body;
-        const createdUserId = await this.usersService.create(body)
+        const createdUserId = await this.usersService.createUser(body)
         if (createdUserId.status !== ResultStatus.Created) {
             return res.status(resultCodeToHttpException(createdUserId.status)).send({errorsMessages: createdUserId.extensions});
         }
@@ -47,7 +47,7 @@ export class UsersController {
 
     async deleteUser(req: Request, res: Response) {
         const userId = req.params.id;
-        const result = await this.usersService.delete(userId);
+        const result = await this.usersService.deleteUser(userId);
         return res.sendStatus(resultCodeToHttpException(result.status))
     }
 

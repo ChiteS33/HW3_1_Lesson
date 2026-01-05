@@ -68,8 +68,10 @@ export class PostsController {
     }
 
     async getPostByID(req: Request, res: Response) {
+        const userId = req.user?._id ? req.user._id.toString() : null
+
         const postId = req.params.id;
-        const foundPost = await this.postsQueryRepository.findPostById(postId);
+        const foundPost = await this.postsQueryRepository.findPostById(postId, userId!);
         if (foundPost.status !== ResultStatus.Success) {
             return res.sendStatus(resultCodeToHttpException(foundPost.status));
         }
@@ -77,8 +79,9 @@ export class PostsController {
     }
 
     async getPostList(req: Request, res: Response) {
+        const userId = req.user?._id ? req.user._id.toString() : null
         const query: InPutPagination = req.query
-        const posts = await this.postsQueryRepository.findAll(query)
+        const posts = await this.postsQueryRepository.findAll(query, userId!)
         if (posts.status !== ResultStatus.Success) {
             return res.sendStatus(resultCodeToHttpException(posts.status))
         }

@@ -21,7 +21,7 @@ export class CommentsQueryRepository {
     }
 
 
-    async findCommentById(commentId: string, userId: string): Promise<ObjectResult<CommentOutPut | null>> {
+    async findCommentById(commentId: string, userId?: string): Promise<ObjectResult<CommentOutPut | null>> {
         const totalCountLike = await LikeModel.countDocuments({commentId: commentId, status: "Like"})
         const totalCountDislike = await LikeModel.countDocuments({commentId: commentId, status: "Dislike"})
         let myStatus = "None"

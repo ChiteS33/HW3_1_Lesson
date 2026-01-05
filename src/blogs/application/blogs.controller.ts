@@ -76,13 +76,14 @@ export class BlogsController {
     }
 
     async getPostByBlogId(req: Request, res: Response,) {
+        const userId = req.user?._id ? req.user._id.toString() : null
         const blogId = req.params.id;
         const query = req.query;
         const foundBlog = await this.blogsService.findById(blogId)
         if (foundBlog.status !== "Success") {
             return res.sendStatus(resultCodeToHttpException(foundBlog.status))
         }
-        const post: ObjectResult<FinalWithPagination<PostOutPut>> = await this.postsQueryRepository.findPostsByBlogId(blogId, query) //
+        const post: ObjectResult<FinalWithPagination<PostOutPut>> = await this.postsQueryRepository.findPostsByBlogId(blogId, query, userId!) //
         return res.status(resultCodeToHttpException(post.status)).send(post.data);
     }
 
